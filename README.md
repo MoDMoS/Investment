@@ -1,0 +1,53 @@
+# บันทึกการลงทุน
+
+เว็บบันทึกการแลกเงินบาท–USD และการซื้อขายหุ้นสหรัฐ หน้าบ้านเป็น React หลังบ้านเป็น NestJS ข้อมูลแยกตามบัญชีที่สมัคร
+
+## โครงสร้าง
+
+- `frontend/` — Vite + React + Tailwind
+- `backend/` — NestJS + Prisma + SQLite
+
+## รันบนเครื่องตัวเอง
+
+ต้องมี Node.js 20+
+
+```bash
+cd backend
+copy .env.example .env
+npm install
+npx prisma db push
+npm run start:dev
+```
+
+อีกหน้าต่าง:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+เปิด [http://localhost:5173](http://localhost:5173) สมัครสมาชิกแล้วเริ่มบันทึก
+
+- แลกเงิน: กรอกอย่างน้อย 2 ใน 3 ของบาท / USD / เรท
+- เงินนำกลับ: กรอกเองเมื่อโอนเข้าไทยจริง ไม่ถูกสร้างตอนขายหุ้น
+
+## ขึ้น VPS (เข้าด้วย IP ไม่ต้องมีโดเมน)
+
+ขั้นตอนเต็มอยู่ที่ [docs/vps-setup.md](docs/vps-setup.md)
+
+สรุปสั้นๆ:
+
+```bash
+cp .env.example .env
+# ใส่ AUTH_SECRET ที่สุ่มด้วย: openssl rand -base64 48
+# คง COOKIE_SECURE=false ไว้ เพราะเข้าผ่าน http://IP
+docker compose up -d --build
+```
+
+เปิด `http://YOUR_VPS_IP`
+
+- `/` ไปที่หน้า React
+- `/api` ไปที่ NestJS
+- ฐานข้อมูลอยู่ที่ `./data/app.db`
+- อย่าเปิดพอร์ต 3000 ของ API ออกเน็ตตรงๆ
