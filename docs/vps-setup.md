@@ -100,16 +100,16 @@ docker compose version
 ### แบบ clone จาก Git
 
 ```bash
-sudo mkdir -p /opt/investment
-sudo chown $USER:$USER /opt/investment
-cd /opt/investment
+sudo mkdir -p /investment
+sudo chown $USER:$USER /investment
+cd /investment
 git clone YOUR_REPO_URL .
 ```
 
 ### แบบอัปโหลดจากเครื่องคุณ
 
 ```bash
-scp -r ./Investment deploy@YOUR_VPS_IP:/opt/investment
+scp -r ./Investment deploy@YOUR_VPS_IP:/investment
 ```
 
 ---
@@ -117,7 +117,7 @@ scp -r ./Investment deploy@YOUR_VPS_IP:/opt/investment
 ## 6. ตั้งค่า `.env`
 
 ```bash
-cd /opt/investment
+cd /investment
 cp .env.example .env
 nano .env
 ```
@@ -142,7 +142,7 @@ openssl rand -base64 48
 ## 7. สร้างโฟลเดอร์ข้อมูล แล้วรันแอป
 
 ```bash
-cd /opt/investment
+cd /investment
 mkdir -p data backups
 docker compose up -d --build
 docker compose ps
@@ -162,7 +162,7 @@ curl -I http://127.0.0.1
 
 ## 8. สำรองฐานข้อมูลทุกวัน
 
-ฐานข้อมูลอยู่ที่ `/opt/investment/data/app.db`
+ฐานข้อมูลอยู่ที่ `/investment/data/app.db`
 
 ```bash
 crontab -e
@@ -171,19 +171,19 @@ crontab -e
 เพิ่มบรรทัด:
 
 ```cron
-0 2 * * * cp /opt/investment/data/app.db /opt/investment/backups/app-$(date +\%F).db
+0 2 * * * cp /investment/data/app.db /investment/backups/app-$(date +\%F).db
 ```
 
 ลบไฟล์เก่ากว่า 30 วัน (ไม่บังคับ):
 
 ```cron
-30 2 * * * find /opt/investment/backups -name 'app-*.db' -mtime +30 -delete
+30 2 * * * find /investment/backups -name 'app-*.db' -mtime +30 -delete
 ```
 
 ดาวน์โหลดสำเนามาเครื่องตัวเองเป็นครั้งคราว:
 
 ```bash
-scp deploy@YOUR_VPS_IP:/opt/investment/data/app.db ./app-backup.db
+scp deploy@YOUR_VPS_IP:/investment/data/app.db ./app-backup.db
 ```
 
 ---
@@ -191,7 +191,7 @@ scp deploy@YOUR_VPS_IP:/opt/investment/data/app.db ./app-backup.db
 ## 9. อัปเดตเวอร์ชันใหม่
 
 ```bash
-cd /opt/investment
+cd /investment
 git pull
 docker compose up -d --build
 ```
@@ -203,7 +203,7 @@ docker compose up -d --build
 ## 10. คำสั่งดูแลที่ใช้บ่อย
 
 ```bash
-cd /opt/investment
+cd /investment
 
 docker compose ps
 docker compose logs -f --tail=100
@@ -240,7 +240,7 @@ curl -I http://127.0.0.1
 ตรวจว่า `.env` มี `COOKIE_SECURE=false` แล้วรัน `docker compose up -d` ใหม่ ต้องเข้าด้วย `http://` ไม่ใช่ `https://`
 
 **ข้อมูลหายหลัง rebuild**  
-ตรวจว่ามีโฟลเดอร์ `/opt/investment/data` และใน `docker-compose.yml` ยังมี
+ตรวจว่ามีโฟลเดอร์ `/investment/data` และใน `docker-compose.yml` ยังมี
 
 ```yaml
 volumes:
