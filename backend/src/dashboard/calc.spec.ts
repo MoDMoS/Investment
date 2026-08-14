@@ -72,5 +72,19 @@ describe('computeDashboard', () => {
     expect(summary.thbNetAbroad).toBe(18500);
     expect(summary.cashUsd).toBe(550);
     expect(summary.holdings).toHaveLength(0);
+    expect(summary.dividendNetUsd).toBe(0);
+  });
+
+  it('adds net dividends to cash without counting as THB inbound', () => {
+    const summary = computeDashboard(
+      [{ direction: 'out', thbAmount: 35500, usdAmount: 1000 }],
+      [],
+      [{ grossUsd: 10, netUsd: 8.5 }],
+    );
+
+    expect(summary.thbIn).toBe(0);
+    expect(summary.dividendGrossUsd).toBe(10);
+    expect(summary.dividendNetUsd).toBe(8.5);
+    expect(summary.cashUsd).toBe(1008.5);
   });
 });

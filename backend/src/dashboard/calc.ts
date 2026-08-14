@@ -21,6 +21,11 @@ export type Holding = {
   totalCostUsd: number;
 };
 
+export type DividendRow = {
+  netUsd: number;
+  grossUsd: number;
+};
+
 export type DashboardSummary = {
   thbOut: number;
   thbIn: number;
@@ -28,6 +33,8 @@ export type DashboardSummary = {
   avgOutRate: number | null;
   cashUsd: number;
   holdingsCostUsd: number;
+  dividendGrossUsd: number;
+  dividendNetUsd: number;
   holdings: Holding[];
 };
 
@@ -76,6 +83,7 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
 export function computeDashboard(
   transfers: TransferRow[],
   trades: TradeRow[],
+  dividends: DividendRow[] = [],
 ): DashboardSummary {
   let thbOut = 0;
   let thbIn = 0;
@@ -100,14 +108,18 @@ export function computeDashboard(
 
   const holdings = computeHoldings(trades);
   const holdingsCostUsd = holdings.reduce((sum, row) => sum + row.totalCostUsd, 0);
+  const dividendGrossUsd = dividends.reduce((sum, row) => sum + row.grossUsd, 0);
+  const dividendNetUsd = dividends.reduce((sum, row) => sum + row.netUsd, 0);
 
   return {
     thbOut,
     thbIn,
     thbNetAbroad: thbOut - thbIn,
     avgOutRate: usdOut > 0 ? thbOut / usdOut : null,
-    cashUsd: usdOut - usdIn + tradeCash,
+    cashUsd: usdOut - usdIn + tradeCash + dividendNetUsd,
     holdingsCostUsd,
+    dividendGrossUsd,
+    dividendNetUsd,
     holdings,
   };
 }

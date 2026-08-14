@@ -29,6 +29,17 @@ export type Trade = {
   cashWarning?: boolean;
 };
 
+export type Dividend = {
+  id: string;
+  date: string;
+  ticker: string;
+  shares: number;
+  grossUsd: number;
+  taxUsd: number;
+  netUsd: number;
+  note: string;
+};
+
 export type Holding = {
   ticker: string;
   shares: number;
@@ -43,5 +54,7 @@ export type Dashboard = {
   avgOutRate: number | null;
   cashUsd: number;
   holdingsCostUsd: number;
+  dividendGrossUsd: number;
+  dividendNetUsd: number;
   holdings: Holding[];
 };

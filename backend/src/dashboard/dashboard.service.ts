@@ -7,10 +7,11 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async get(userId: string) {
-    const [transfers, trades] = await Promise.all([
+    const [transfers, trades, dividends] = await Promise.all([
       this.prisma.fxTransfer.findMany({ where: { userId } }),
       this.prisma.trade.findMany({ where: { userId } }),
+      this.prisma.dividend.findMany({ where: { userId } }),
     ]);
-    return computeDashboard(transfers, trades);
+    return computeDashboard(transfers, trades, dividends);
   }
 }

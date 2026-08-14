@@ -15,6 +15,7 @@ model User {
   createdAt    DateTime     @default(now())
   transfers    FxTransfer[]
   trades       Trade[]
+  dividends    Dividend[]
 }
 
 model FxTransfer {
@@ -44,6 +45,22 @@ model Trade {
   shares    Float
   priceUsd  Float
   feeUsd    Float    @default(0)
+  note      String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model Dividend {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  ticker    String
+  shares    Float    @default(0)
+  grossUsd  Float
+  taxUsd    Float    @default(0)
+  netUsd    Float
   note      String   @default("")
   createdAt DateTime @default(now())
 

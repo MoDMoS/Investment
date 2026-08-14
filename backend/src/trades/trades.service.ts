@@ -54,11 +54,12 @@ export class TradesService {
 
   private async willExceedCash(userId: string, dto: UpsertTradeDto) {
     if (dto.side !== 'buy') return false;
-    const [transfers, trades] = await Promise.all([
+    const [transfers, trades, dividends] = await Promise.all([
       this.prisma.fxTransfer.findMany({ where: { userId } }),
       this.prisma.trade.findMany({ where: { userId } }),
+      this.prisma.dividend.findMany({ where: { userId } }),
     ]);
-    const summary = computeDashboard(transfers, trades);
+    const summary = computeDashboard(transfers, trades, dividends);
     const cost = tradeCostUsd({
       date: parseDateOnly(dto.date),
       createdAt: new Date(),

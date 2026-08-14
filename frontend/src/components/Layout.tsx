@@ -31,6 +31,9 @@ export function Layout() {
             <NavLink to="/trades" className={linkClass}>
               ซื้อขายหุ้น
             </NavLink>
+            <NavLink to="/dividends" className={linkClass}>
+              ปันผล
+            </NavLink>
             <button
               type="button"
               onClick={() => void logout()}

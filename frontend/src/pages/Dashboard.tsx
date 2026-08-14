@@ -36,15 +36,25 @@ export function DashboardPage() {
           value={data.avgOutRate ? `${fmt.rate(data.avgOutRate)} บาท/USD` : '—'}
         />
         <Card label="เงินสด USD" value={fmt.usd(data.cashUsd)} />
+        <Card
+          label="ปันผลสุทธิ"
+          value={fmt.usd(data.dividendNetUsd)}
+          hint="เข้าเงินสด USD ยังไม่ใช่เงินนำกลับไทย"
+        />
         <Card label="ต้นทุนหุ้นที่ถือ" value={fmt.usd(data.holdingsCostUsd)} />
       </div>
 
       <section className="card">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">หุ้นที่ถืออยู่</h2>
-          <Link to="/trades" className="text-sm text-emerald-800">
-            บันทึกซื้อขาย
-          </Link>
+          <div className="flex gap-3 text-sm">
+            <Link to="/trades" className="text-emerald-800">
+              บันทึกซื้อขาย
+            </Link>
+            <Link to="/dividends" className="text-emerald-800">
+              บันทึกปันผล
+            </Link>
+          </div>
         </div>
         {data.holdings.length === 0 ? (
           <p className="text-sm text-stone-500">ยังไม่มีหุ้นในพอร์ต</p>

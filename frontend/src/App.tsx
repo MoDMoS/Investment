@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/Dashboard';
+import { DividendsPage } from './pages/Dividends';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { TradesPage } from './pages/Trades';
@@ -26,6 +27,7 @@ export function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/transfers" element={<TransfersPage />} />
           <Route path="/trades" element={<TradesPage />} />
+          <Route path="/dividends" element={<DividendsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
