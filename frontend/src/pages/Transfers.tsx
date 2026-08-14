@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { SortTh } from '../components/SortTh';
-import { apiError, fmt, todayIso } from '../format';
+import { apiError, todayIso } from '../format';
+import { useMoneyFmt } from '../privacy';
 import type { Transfer } from '../types';
 
 type FormState = {
@@ -27,6 +28,7 @@ const empty = (): FormState => ({
 });
 
 export function TransfersPage() {
+  const money = useMoneyFmt();
   const [rows, setRows] = useState<Transfer[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -342,9 +344,9 @@ export function TransfersPage() {
                     <td className="font-semibold">
                       {row.direction === 'out' ? 'ส่งออก' : 'นำกลับ'}
                     </td>
-                    <td className="text-right">{fmt.number(row.thbAmount)}</td>
-                    <td className="text-right">{fmt.number(row.usdAmount)}</td>
-                    <td className="text-right">{fmt.rate(row.rate)}</td>
+                    <td className="text-right">{money.number(row.thbAmount)}</td>
+                    <td className="text-right">{money.number(row.usdAmount)}</td>
+                    <td className="text-right">{money.rate(row.rate)}</td>
                     <td>{row.note}</td>
                     <td className="text-right whitespace-nowrap">
                       <button className="text-sm text-emerald-800" onClick={() => edit(row)}>

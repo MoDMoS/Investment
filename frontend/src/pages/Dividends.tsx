@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import { apiError, fmt, todayIso } from '../format';
+import { useMoneyFmt } from '../privacy';
 import type { Dividend } from '../types';
 
 type FormState = {
@@ -22,6 +23,7 @@ const empty = (): FormState => ({
 });
 
 export function DividendsPage() {
+  const money = useMoneyFmt();
   const [rows, setRows] = useState<Dividend[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -205,9 +207,9 @@ export function DividendsPage() {
                   <td>{row.date}</td>
                   <td className="font-medium">{row.ticker}</td>
                   <td className="text-right">{row.shares ? fmt.shares(row.shares) : '—'}</td>
-                  <td className="text-right">{fmt.usd(row.grossUsd)}</td>
-                  <td className="text-right">{fmt.usd(row.taxUsd)}</td>
-                  <td className="text-right">{fmt.usd(row.netUsd)}</td>
+                  <td className="text-right">{money.usd(row.grossUsd)}</td>
+                  <td className="text-right">{money.usd(row.taxUsd)}</td>
+                  <td className="text-right">{money.usd(row.netUsd)}</td>
                   <td className="text-right whitespace-nowrap">
                     <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
                       แก้

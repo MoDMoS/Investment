@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { DonutChart } from '../components/DonutChart';
 import { apiError, fmt } from '../format';
+import { useMoneyFmt, usePrivacy } from '../privacy';
 import type { Dashboard, Holding } from '../types';
 
 export function DashboardPage() {
+  const money = useMoneyFmt();
+  const { hidden } = usePrivacy();
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
 
@@ -45,33 +48,33 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card label="เงินออกประเทศ" value={fmt.thb(data.thbOut)} />
-        <Card label="เงินนำกลับ" value={fmt.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
-        <Card label="สุทธิต่างประเทศ" value={fmt.thb(data.thbNetAbroad)} />
-        <Card label="เงินสด USD" value={fmt.usd(data.cashUsd)} />
+        <Card label="เงินออกประเทศ" value={money.thb(data.thbOut)} />
+        <Card label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
+        <Card label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
+        <Card label="เงินสด USD" value={money.usd(data.cashUsd)} />
         <Card
           label="มูลค่าหุ้นนอก"
-          value={data.marketValueUsd != null ? fmt.usd(data.marketValueUsd) : '—'}
-          hint={`ต้นทุน ${fmt.usd(data.holdingsCostUsd)}`}
+          value={data.marketValueUsd != null ? money.usd(data.marketValueUsd) : '—'}
+          hint={`ต้นทุน ${money.usd(data.holdingsCostUsd)}`}
         />
         <Card
           label="P/L หุ้นนอก"
-          value={data.pnlUsd != null ? fmt.signed(fmt.usd, data.pnlUsd) : '—'}
-          tone={tone(data.pnlUsd)}
+          value={data.pnlUsd != null ? money.signed(fmt.usd, data.pnlUsd) : '—'}
+          tone={hidden ? 'flat' : tone(data.pnlUsd)}
         />
         <Card
           label="มูลค่าหุ้นไทย"
-          value={data.marketValueThb != null ? fmt.thb(data.marketValueThb) : '—'}
-          hint={`ต้นทุน ${fmt.thb(data.holdingsCostThb)}`}
+          value={data.marketValueThb != null ? money.thb(data.marketValueThb) : '—'}
+          hint={`ต้นทุน ${money.thb(data.holdingsCostThb)}`}
         />
         <Card
           label="P/L หุ้นไทย"
-          value={data.pnlThb != null ? fmt.signed(fmt.thb, data.pnlThb) : '—'}
-          tone={tone(data.pnlThb)}
+          value={data.pnlThb != null ? money.signed(fmt.thb, data.pnlThb) : '—'}
+          tone={hidden ? 'flat' : tone(data.pnlThb)}
         />
         <Card
           label="ปันผลสุทธิ"
-          value={fmt.usd(data.dividendNetUsd)}
+          value={money.usd(data.dividendNetUsd)}
           hint="เข้าเงินสด USD ยังไม่ใช่เงินนำกลับไทย"
         />
       </div>
@@ -80,13 +83,15 @@ export function DashboardPage() {
         <HoldingsCard
           title="หุ้นนอก"
           holdings={data.holdingsForeign}
-          money={fmt.usd}
+          money={money.usd}
+          signed={(value) => money.signed(fmt.usd, value)}
           empty="ยังไม่มีหุ้นนอก"
         />
         <HoldingsCard
           title="หุ้นไทย"
           holdings={data.holdingsThai}
-          money={fmt.thb}
+          money={money.thb}
+          signed={(value) => money.signed(fmt.thb, value)}
           empty="ยังไม่มีหุ้นไทย"
         />
       </div>
@@ -98,13 +103,16 @@ function HoldingsCard({
   title,
   holdings,
   money,
+  signed,
   empty,
 }: {
   title: string;
   holdings: Holding[];
   money: (value: number) => string;
+  signed: (value: number) => string;
   empty: string;
 }) {
+  const { hidden } = usePrivacy();
   const hasQuotes = holdings.some((row) => row.marketValue != null);
   const total = holdings.reduce(
     (sum, row) => sum + (row.marketValue ?? row.totalCost),
@@ -151,12 +159,14 @@ function HoldingsCard({
                   <td className="text-right">
                     {row.marketValue != null ? money(row.marketValue) : money(row.totalCost)}
                   </td>
-                  <td className={`text-right font-medium ${pnlClass(row.pnl)}`}>
-                    {row.pnl != null
-                      ? `${fmt.signed(money, row.pnl)}${
-                          row.pnlPct != null ? ` (${fmt.number(row.pnlPct * 100, 1)}%)` : ''
-                        }`
-                      : '—'}
+                  <td className={`text-right font-medium ${pnlClass(hidden ? null : row.pnl)}`}>
+                    {row.pnl == null
+                      ? '—'
+                      : hidden
+                        ? signed(row.pnl)
+                        : `${signed(row.pnl)}${
+                            row.pnlPct != null ? ` (${fmt.number(row.pnlPct * 100, 1)}%)` : ''
+                          }`}
                   </td>
                 </tr>
               ))}

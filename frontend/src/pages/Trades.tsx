@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { SortTh } from '../components/SortTh';
 import { apiError, fmt, todayIso } from '../format';
+import { useMoneyFmt } from '../privacy';
 import type { Market, Trade } from '../types';
 
 type FormState = {
@@ -27,6 +28,7 @@ const empty = (): FormState => ({
 });
 
 export function TradesPage() {
+  const money = useMoneyFmt();
   const [rows, setRows] = useState<Trade[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -375,10 +377,10 @@ export function TradesPage() {
                     <td className="font-semibold">{row.side === 'buy' ? 'ซื้อ' : 'ขาย'}</td>
                     <td className="text-right">{fmt.shares(row.shares)}</td>
                     <td className="text-right">
-                      {row.market === 'th' ? fmt.thb(row.priceUsd) : fmt.usd(row.priceUsd)}
+                      {row.market === 'th' ? money.thb(row.priceUsd) : money.usd(row.priceUsd)}
                     </td>
                     <td className="text-right">
-                      {row.market === 'th' ? fmt.thb(row.totalUsd) : fmt.usd(row.totalUsd)}
+                      {row.market === 'th' ? money.thb(row.totalUsd) : money.usd(row.totalUsd)}
                     </td>
                     <td className="text-right whitespace-nowrap">
                       <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
