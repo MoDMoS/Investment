@@ -1,11 +1,11 @@
 const thb = new Intl.NumberFormat('th-TH', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
 });
 
 const usd = new Intl.NumberFormat('th-TH', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
 });
 
 const shares = new Intl.NumberFormat('th-TH', {
@@ -14,7 +14,7 @@ const shares = new Intl.NumberFormat('th-TH', {
 });
 
 const rate = new Intl.NumberFormat('th-TH', {
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 4,
   maximumFractionDigits: 4,
 });
 
@@ -23,7 +23,7 @@ export const fmt = {
   usd: (value: number) => `${usd.format(value)} USD`,
   shares: (value: number) => shares.format(value),
   rate: (value: number) => rate.format(value),
-  number: (value: number, digits = 2) =>
+  number: (value: number, digits = 4) =>
     new Intl.NumberFormat('th-TH', {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
