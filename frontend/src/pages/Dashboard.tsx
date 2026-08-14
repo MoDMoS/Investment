@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAccounts } from '../accounts';
 import { api } from '../api';
 import { DonutChart } from '../components/DonutChart';
 import { HideMoneyButton } from '../components/HideMoneyButton';
@@ -10,6 +11,8 @@ import type { Dashboard, Holding } from '../types';
 export function DashboardPage() {
   const money = useMoneyFmt();
   const { hidden } = usePrivacy();
+  const { accounts } = useAccounts();
+  const [accountId, setAccountId] = useState('');
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
 
@@ -18,7 +21,8 @@ export function DashboardPage() {
 
     async function load() {
       try {
-        const next = await api.get<Dashboard>('/dashboard');
+        const path = accountId ? `/dashboard?accountId=${encodeURIComponent(accountId)}` : '/dashboard';
+        const next = await api.get<Dashboard>(path);
         if (!cancelled) {
           setData(next);
           setError('');
@@ -34,21 +38,35 @@ export function DashboardPage() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [accountId]);
 
   if (error && !data) return <p className="text-red-700">{error}</p>;
   if (!data) return <p className="text-stone-500">กำลังโหลด...</p>;
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
-          <HideMoneyButton />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
+            <HideMoneyButton />
+          </div>
         </div>
-        <p className="text-sm text-stone-500">
-          ราคาตลาดดึงจาก Yahoo แบบฟรี (หน่วงได้) รีเฟรชทุก 1 นาที ไม่ใช่ราคาซื้อขายจริงทุกวินาที
-        </p>
+        <label className="block min-w-48">
+          <span className="label">บัญชี</span>
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            className="input"
+          >
+            <option value="">ทั้งหมด</option>
+            {accounts.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,15 +74,21 @@ export function DashboardPage() {
         <Card label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
         <Card label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
         <Card label="เงินสด USD" value={money.usd(data.cashUsd)} />
+        <Card label="เงินสดบาท (โบรกไทย)" value={money.thb(data.cashThb)} hint="เงินเข้าโบรก − ซื้อหุ้นไทย" />
         <Card
           label="มูลค่าหุ้นนอก"
           value={data.marketValueUsd != null ? money.usd(data.marketValueUsd) : '—'}
           hint={`ต้นทุน ${money.usd(data.holdingsCostUsd)}`}
         />
         <Card
-          label="P/L หุ้นนอก"
+          label="P/L หุ้นนอก (ยังไม่ปิด)"
           value={data.pnlUsd != null ? money.signed(fmt.usd, data.pnlUsd) : '—'}
           tone={hidden ? 'flat' : tone(data.pnlUsd)}
+        />
+        <Card
+          label="P/L ที่ปิดแล้ว (USD)"
+          value={money.signed(fmt.usd, data.realizedPnlUsd)}
+          tone={hidden ? 'flat' : tone(data.realizedPnlUsd)}
         />
         <Card
           label="มูลค่าหุ้นไทย"
@@ -72,9 +96,14 @@ export function DashboardPage() {
           hint={`ต้นทุน ${money.thb(data.holdingsCostThb)}`}
         />
         <Card
-          label="P/L หุ้นไทย"
+          label="P/L หุ้นไทย (ยังไม่ปิด)"
           value={data.pnlThb != null ? money.signed(fmt.thb, data.pnlThb) : '—'}
           tone={hidden ? 'flat' : tone(data.pnlThb)}
+        />
+        <Card
+          label="P/L ที่ปิดแล้ว (บาท)"
+          value={money.signed(fmt.thb, data.realizedPnlThb)}
+          tone={hidden ? 'flat' : tone(data.realizedPnlThb)}
         />
         <Card
           label="ปันผลสุทธิ"
@@ -99,6 +128,42 @@ export function DashboardPage() {
           empty="ยังไม่มีหุ้นไทย"
         />
       </div>
+
+      <section className="card space-y-4">
+        <h2 className="text-lg font-semibold">กำไรที่ปิดแล้ว</h2>
+        {data.realized.length === 0 ? (
+          <p className="text-sm text-stone-500">ยังไม่มีรายการขาย</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>วันที่</th>
+                  <th>หุ้น</th>
+                  <th>ตลาด</th>
+                  <th className="text-right">จำนวน</th>
+                  <th className="text-right">กำไร</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.realized.map((row, index) => (
+                  <tr key={`${row.ticker}-${row.date}-${index}`}>
+                    <td>{row.date}</td>
+                    <td className="font-medium">{row.ticker}</td>
+                    <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
+                    <td className="text-right">{fmt.shares(row.shares)}</td>
+                    <td className={`text-right font-medium ${pnlClass(hidden ? null : row.pnl)}`}>
+                      {row.market === 'th'
+                        ? money.signed(fmt.thb, row.pnl)
+                        : money.signed(fmt.usd, row.pnl)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

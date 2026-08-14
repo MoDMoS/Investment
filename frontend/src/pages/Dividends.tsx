@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import { firstAccountId, useAccounts } from '../accounts';
 import { api } from '../api';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { apiError, fmt, todayIso } from '../format';
@@ -7,6 +8,7 @@ import type { Dividend } from '../types';
 
 type FormState = {
   date: string;
+  accountId: string;
   ticker: string;
   shares: string;
   grossUsd: string;
@@ -16,6 +18,7 @@ type FormState = {
 
 const empty = (): FormState => ({
   date: todayIso(),
+  accountId: '',
   ticker: '',
   shares: '',
   grossUsd: '',
@@ -25,6 +28,7 @@ const empty = (): FormState => ({
 
 export function DividendsPage() {
   const money = useMoneyFmt();
+  const { accounts } = useAccounts();
   const [rows, setRows] = useState<Dividend[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,6 +43,12 @@ export function DividendsPage() {
     load().catch((err) => setError(apiError(err, 'โหลดรายการไม่สำเร็จ')));
   }, []);
 
+  useEffect(() => {
+    if (form.accountId) return;
+    const id = firstAccountId(accounts, 'foreign');
+    if (id) setForm((prev) => ({ ...prev, accountId: id }));
+  }, [accounts, form.accountId]);
+
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -49,6 +59,7 @@ export function DividendsPage() {
     setSubmitting(true);
     const body = {
       date: form.date,
+      accountId: form.accountId,
       ticker: form.ticker,
       shares: numOrUndef(form.shares) ?? 0,
       grossUsd: Number(form.grossUsd),
@@ -75,6 +86,7 @@ export function DividendsPage() {
     setEditingId(row.id);
     setForm({
       date: row.date,
+      accountId: row.accountId ?? '',
       ticker: row.ticker,
       shares: row.shares ? String(row.shares) : '',
       grossUsd: String(row.grossUsd),
@@ -116,6 +128,23 @@ export function DividendsPage() {
             onChange={(e) => set('date', e.target.value)}
             className="input"
           />
+        </label>
+        <label className="block">
+          <span className="label">บัญชีหุ้นนอก</span>
+          <select
+            required
+            value={form.accountId}
+            onChange={(e) => set('accountId', e.target.value)}
+            className="input"
+          >
+            {accounts
+              .filter((row) => row.kind === 'foreign')
+              .map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.name}
+                </option>
+              ))}
+          </select>
         </label>
         <label className="block">
           <span className="label">ชื่อหุ้น</span>
@@ -197,6 +226,7 @@ export function DividendsPage() {
             <thead>
               <tr>
                 <th>วันที่</th>
+                <th>บัญชี</th>
                 <th>หุ้น</th>
                 <th className="text-right">จำนวนหุ้น</th>
                 <th className="text-right">ก่อนหักภาษี</th>
@@ -209,6 +239,7 @@ export function DividendsPage() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.date}</td>
+                  <td>{row.accountName}</td>
                   <td className="font-medium">{row.ticker}</td>
                   <td className="text-right">{row.shares ? fmt.shares(row.shares) : '—'}</td>
                   <td className="text-right">{money.usd(row.grossUsd)}</td>

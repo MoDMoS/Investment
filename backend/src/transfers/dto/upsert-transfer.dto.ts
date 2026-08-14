@@ -47,5 +47,9 @@ export class UpsertTransferDto {
 
   @IsOptional()
   @IsString()
+  accountId?: string;
+
+  @IsOptional()
+  @IsString()
   note?: string;
 }

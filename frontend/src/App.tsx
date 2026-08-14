@@ -3,6 +3,7 @@ import { useAuth } from './auth';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/Dashboard';
 import { DividendsPage } from './pages/Dividends';
+import { AccountsPage } from './pages/Accounts';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { TradesPage } from './pages/Trades';
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/transfers" element={<TransfersPage />} />
           <Route path="/trades" element={<TradesPage />} />
           <Route path="/dividends" element={<DividendsPage />} />
+          <Route path="/accounts" element={<AccountsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

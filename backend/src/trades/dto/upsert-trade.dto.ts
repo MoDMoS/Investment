@@ -18,6 +18,10 @@ export class UpsertTradeDto {
   ticker!: string;
 
   @IsOptional()
+  @IsString()
+  accountId?: string;
+
+  @IsOptional()
   @IsIn(['th', 'foreign'])
   market?: 'th' | 'foreign';
 

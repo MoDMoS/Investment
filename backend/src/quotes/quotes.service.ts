@@ -42,6 +42,14 @@ export class QuotesService {
     return result;
   }
 
+  async getUsdThb() {
+    const quote = await this.getPrice('USDTHB=X');
+    if (!quote) {
+      return { rate: null, asOf: null };
+    }
+    return { rate: quote.price, asOf: new Date().toISOString(), stale: quote.stale };
+  }
+
   private async getPrice(symbol: string): Promise<QuotePrice | null> {
     const cached = this.cache.get(symbol);
     if (cached && Date.now() - cached.at < TTL_MS) {

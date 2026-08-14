@@ -35,5 +35,9 @@ export class UpsertDividendDto {
 
   @IsOptional()
   @IsString()
+  accountId?: string;
+
+  @IsOptional()
+  @IsString()
   note?: string;
 }

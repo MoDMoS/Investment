@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { firstAccountId, useAccounts } from '../accounts';
 import { api } from '../api';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { SortTh } from '../components/SortTh';
@@ -8,6 +9,7 @@ import type { Transfer } from '../types';
 
 type FormState = {
   date: string;
+  accountId: string;
   direction: 'out' | 'in';
   thbAmount: string;
   usdAmount: string;
@@ -19,6 +21,7 @@ type FormState = {
 
 const empty = (): FormState => ({
   date: todayIso(),
+  accountId: '',
   direction: 'out',
   thbAmount: '',
   usdAmount: '',
@@ -30,6 +33,7 @@ const empty = (): FormState => ({
 
 export function TransfersPage() {
   const money = useMoneyFmt();
+  const { accounts } = useAccounts();
   const [rows, setRows] = useState<Transfer[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,6 +43,7 @@ export function TransfersPage() {
   const [noteQuery, setNoteQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [rateLoading, setRateLoading] = useState(false);
 
   async function load() {
     const data = await api.get<Transfer[]>('/transfers');
@@ -48,6 +53,12 @@ export function TransfersPage() {
   useEffect(() => {
     load().catch((err) => setError(apiError(err, 'โหลดรายการไม่สำเร็จ')));
   }, []);
+
+  useEffect(() => {
+    if (form.accountId) return;
+    const id = firstAccountId(accounts, 'foreign');
+    if (id) setForm((prev) => ({ ...prev, accountId: id }));
+  }, [accounts, form.accountId]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -59,6 +70,7 @@ export function TransfersPage() {
     setSubmitting(true);
     const body = {
       date: form.date,
+      accountId: form.accountId,
       direction: form.direction,
       thbAmount: numOrUndef(form.thbAmount),
       usdAmount: numOrUndef(form.usdAmount),
@@ -87,6 +99,7 @@ export function TransfersPage() {
     setEditingId(row.id);
     setForm({
       date: row.date,
+      accountId: row.accountId ?? '',
       direction: row.direction,
       thbAmount: String(row.thbAmount),
       usdAmount: String(row.usdAmount),
@@ -152,6 +165,23 @@ export function TransfersPage() {
           />
         </label>
         <label className="block">
+          <span className="label">บัญชีหุ้นนอก</span>
+          <select
+            required
+            value={form.accountId}
+            onChange={(e) => set('accountId', e.target.value)}
+            className="input"
+          >
+            {accounts
+              .filter((row) => row.kind === 'foreign')
+              .map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label className="block">
           <span className="label">ทิศทาง</span>
           <select
             value={form.direction}
@@ -186,14 +216,37 @@ export function TransfersPage() {
         </label>
         <label className="block">
           <span className="label">เรท (บาทต่อ 1 USD)</span>
-          <input
-            type="number"
-            step="any"
-            min="0"
-            value={form.rate}
-            onChange={(e) => set('rate', e.target.value)}
-            className="input"
-          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              step="any"
+              min="0"
+              value={form.rate}
+              onChange={(e) => set('rate', e.target.value)}
+              className="input"
+            />
+            <button
+              type="button"
+              className="btn-ghost shrink-0"
+              disabled={rateLoading}
+              onClick={() => {
+                setRateLoading(true);
+                api
+                  .get<{ rate: number | null }>('/quotes/usdthb')
+                  .then((quote) => {
+                    if (quote.rate == null) {
+                      setError('ดึงเรทตลาดไม่สำเร็จ');
+                      return;
+                    }
+                    set('rate', String(Number(quote.rate.toFixed(4))));
+                  })
+                  .catch((err) => setError(apiError(err, 'ดึงเรทตลาดไม่สำเร็จ')))
+                  .finally(() => setRateLoading(false));
+              }}
+            >
+              {rateLoading ? 'กำลังดึง...' : 'ใช้เรทตลาด'}
+            </button>
+          </div>
         </label>
         <label className="block">
           <span className="label">ค่าธรรมเนียมบาท</span>
@@ -302,6 +355,7 @@ export function TransfersPage() {
                     dir={sortDir}
                     onClick={() => toggleSort('date')}
                   />
+                  <th>บัญชี</th>
                   <SortTh
                     label="ทิศทาง"
                     active={sortKey === 'direction'}
@@ -345,6 +399,7 @@ export function TransfersPage() {
                     className={row.direction === 'in' ? 'trade-buy' : 'trade-sell'}
                   >
                     <td>{row.date}</td>
+                    <td>{row.accountName}</td>
                     <td className="font-semibold">
                       {row.direction === 'out' ? 'ส่งออก' : 'นำกลับ'}
                     </td>

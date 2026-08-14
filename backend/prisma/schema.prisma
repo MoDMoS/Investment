@@ -13,15 +13,35 @@ model User {
   name         String
   passwordHash String
   createdAt    DateTime     @default(now())
+  accounts     Account[]
   transfers    FxTransfer[]
   trades       Trade[]
   dividends    Dividend[]
+  cashEntries  CashEntry[]
+}
+
+model Account {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  kind        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  transfers   FxTransfer[]
+  trades      Trade[]
+  dividends   Dividend[]
+  cashEntries CashEntry[]
+
+  @@index([userId])
 }
 
 model FxTransfer {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   date      DateTime
   direction String
   thbAmount Float
@@ -33,12 +53,15 @@ model FxTransfer {
   createdAt DateTime @default(now())
 
   @@index([userId, date])
+  @@index([accountId])
 }
 
 model Trade {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   date      DateTime
   ticker    String
   market    String   @default("foreign")
@@ -50,12 +73,15 @@ model Trade {
   createdAt DateTime @default(now())
 
   @@index([userId, date])
+  @@index([accountId])
 }
 
 model Dividend {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   date      DateTime
   ticker    String
   shares    Float    @default(0)
@@ -66,4 +92,22 @@ model Dividend {
   createdAt DateTime @default(now())
 
   @@index([userId, date])
+  @@index([accountId])
+}
+
+model CashEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  date      DateTime
+  direction String
+  amount    Float
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@index([accountId])
 }

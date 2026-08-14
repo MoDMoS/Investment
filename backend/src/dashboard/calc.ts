@@ -2,6 +2,7 @@ export type TransferRow = {
   direction: string;
   thbAmount: number;
   usdAmount: number;
+  accountId?: string | null;
 };
 
 export type TradeRow = {
@@ -13,6 +14,7 @@ export type TradeRow = {
   shares: number;
   priceUsd: number;
   feeUsd: number;
+  accountId?: string | null;
 };
 
 export type Holding = {
@@ -27,9 +29,35 @@ export type Holding = {
   pnlPct: number | null;
 };
 
+export type RealizedLot = {
+  date: Date;
+  ticker: string;
+  market: 'th' | 'foreign';
+  shares: number;
+  avgCost: number;
+  sellPrice: number;
+  fee: number;
+  pnl: number;
+};
+
 export type DividendRow = {
   netUsd: number;
   grossUsd: number;
+  accountId?: string | null;
+};
+
+export type CashEntryRow = {
+  accountId: string;
+  direction: string;
+  amount: number;
+  kind: 'th' | 'foreign';
+};
+
+export type AccountCash = {
+  accountId: string;
+  name: string;
+  kind: 'th' | 'foreign';
+  cash: number;
 };
 
 export type DashboardSummary = {
@@ -38,17 +66,22 @@ export type DashboardSummary = {
   thbNetAbroad: number;
   avgOutRate: number | null;
   cashUsd: number;
+  cashThb: number;
   holdingsCostUsd: number;
   holdingsCostThb: number;
   marketValueUsd: number | null;
   marketValueThb: number | null;
   pnlUsd: number | null;
   pnlThb: number | null;
+  realizedPnlUsd: number;
+  realizedPnlThb: number;
+  realized: RealizedLot[];
   quotesAsOf: string | null;
   dividendGrossUsd: number;
   dividendNetUsd: number;
   holdingsThai: Holding[];
   holdingsForeign: Holding[];
+  accountCash: AccountCash[];
 };
 
 export function isThaiMarket(market?: string) {
@@ -65,8 +98,17 @@ export function tradeCostUsd(trade: TradeRow): number {
   return tradeCost(trade);
 }
 
-export function computeHoldings(trades: TradeRow[]): Holding[] {
+export function tradeCostThb(trade: TradeRow): number {
+  if (!isThaiMarket(trade.market)) return 0;
+  return tradeCost(trade);
+}
+
+export function computePositions(trades: TradeRow[]): {
+  holdings: Holding[];
+  realized: RealizedLot[];
+} {
   const map = new Map<string, { market: 'th' | 'foreign'; shares: number; cost: number }>();
+  const realized: RealizedLot[] = [];
   const sorted = [...trades].sort((a, b) => {
     const byDate = a.date.getTime() - b.date.getTime();
     if (byDate !== 0) return byDate;
@@ -83,8 +125,20 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
       current.cost += trade.shares * trade.priceUsd + trade.feeUsd;
     } else {
       const avg = current.shares > 0 ? current.cost / current.shares : 0;
+      const proceeds = trade.shares * trade.priceUsd - trade.feeUsd;
+      const cost = avg * trade.shares;
+      realized.push({
+        date: trade.date,
+        ticker,
+        market,
+        shares: trade.shares,
+        avgCost: avg,
+        sellPrice: trade.priceUsd,
+        fee: trade.feeUsd,
+        pnl: proceeds - cost,
+      });
       current.shares -= trade.shares;
-      current.cost -= avg * trade.shares;
+      current.cost -= cost;
       if (current.shares <= 1e-10) {
         current.shares = 0;
         current.cost = 0;
@@ -93,7 +147,7 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
     map.set(key, current);
   }
 
-  return [...map.entries()]
+  const holdings = [...map.entries()]
     .filter(([, value]) => value.shares > 1e-10)
     .map(([key, value]) => ({
       ticker: key.slice(key.indexOf(':') + 1),
@@ -107,13 +161,30 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
       pnlPct: null,
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker));
+
+  realized.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return { holdings, realized };
 }
 
-export function computeDashboard(
+export function computeHoldings(trades: TradeRow[]): Holding[] {
+  return computePositions(trades).holdings;
+}
+
+function cashFromEntries(entries: CashEntryRow[], kind: 'th' | 'foreign') {
+  let cash = 0;
+  for (const entry of entries) {
+    if (entry.kind !== kind) continue;
+    cash += entry.direction === 'in' ? entry.amount : -entry.amount;
+  }
+  return cash;
+}
+
+function computeCash(
   transfers: TransferRow[],
   trades: TradeRow[],
-  dividends: DividendRow[] = [],
-): DashboardSummary {
+  dividends: DividendRow[],
+  cashEntries: CashEntryRow[],
+) {
   let thbOut = 0;
   let thbIn = 0;
   let usdOut = 0;
@@ -129,38 +200,95 @@ export function computeDashboard(
     }
   }
 
-  let tradeCash = 0;
+  let tradeCashUsd = 0;
+  let tradeCashThb = 0;
   for (const trade of trades) {
-    const amount = tradeCostUsd(trade);
-    if (!amount) continue;
-    tradeCash += trade.side === 'buy' ? -amount : amount;
+    const usd = tradeCostUsd(trade);
+    const thb = tradeCostThb(trade);
+    if (usd) tradeCashUsd += trade.side === 'buy' ? -usd : usd;
+    if (thb) tradeCashThb += trade.side === 'buy' ? -thb : thb;
   }
 
-  const holdings = computeHoldings(trades);
-  const holdingsThai = holdings.filter((row) => row.market === 'th');
-  const holdingsForeign = holdings.filter((row) => row.market === 'foreign');
-  const holdingsCostThb = holdingsThai.reduce((sum, row) => sum + row.totalCost, 0);
-  const holdingsCostUsd = holdingsForeign.reduce((sum, row) => sum + row.totalCost, 0);
   const dividendGrossUsd = dividends.reduce((sum, row) => sum + row.grossUsd, 0);
   const dividendNetUsd = dividends.reduce((sum, row) => sum + row.netUsd, 0);
 
   return {
     thbOut,
     thbIn,
-    thbNetAbroad: thbOut - thbIn,
-    avgOutRate: usdOut > 0 ? thbOut / usdOut : null,
-    cashUsd: usdOut - usdIn + tradeCash + dividendNetUsd,
+    usdOut,
+    usdIn,
+    tradeCashUsd,
+    tradeCashThb,
+    dividendGrossUsd,
+    dividendNetUsd,
+    cashUsd:
+      usdOut - usdIn + tradeCashUsd + dividendNetUsd + cashFromEntries(cashEntries, 'foreign'),
+    cashThb: cashFromEntries(cashEntries, 'th') + tradeCashThb,
+  };
+}
+
+export function computeAccountCash(
+  accounts: { id: string; name: string; kind: string }[],
+  transfers: TransferRow[],
+  trades: TradeRow[],
+  dividends: DividendRow[],
+  cashEntries: CashEntryRow[],
+): AccountCash[] {
+  return accounts.map((account) => {
+    const kind: 'th' | 'foreign' = account.kind === 'th' ? 'th' : 'foreign';
+    const cash = computeCash(
+      transfers.filter((row) => row.accountId === account.id),
+      trades.filter((row) => row.accountId === account.id),
+      dividends.filter((row) => row.accountId === account.id),
+      cashEntries.filter((row) => row.accountId === account.id),
+    );
+    return {
+      accountId: account.id,
+      name: account.name,
+      kind,
+      cash: kind === 'th' ? cash.cashThb : cash.cashUsd,
+    };
+  });
+}
+
+export function computeDashboard(
+  transfers: TransferRow[],
+  trades: TradeRow[],
+  dividends: DividendRow[] = [],
+  cashEntries: CashEntryRow[] = [],
+  accounts: { id: string; name: string; kind: string }[] = [],
+): DashboardSummary {
+  const cash = computeCash(transfers, trades, dividends, cashEntries);
+  const { holdings, realized } = computePositions(trades);
+  const holdingsThai = holdings.filter((row) => row.market === 'th');
+  const holdingsForeign = holdings.filter((row) => row.market === 'foreign');
+  const holdingsCostThb = holdingsThai.reduce((sum, row) => sum + row.totalCost, 0);
+  const holdingsCostUsd = holdingsForeign.reduce((sum, row) => sum + row.totalCost, 0);
+  const realizedThai = realized.filter((row) => row.market === 'th');
+  const realizedForeign = realized.filter((row) => row.market === 'foreign');
+
+  return {
+    thbOut: cash.thbOut,
+    thbIn: cash.thbIn,
+    thbNetAbroad: cash.thbOut - cash.thbIn,
+    avgOutRate: cash.usdOut > 0 ? cash.thbOut / cash.usdOut : null,
+    cashUsd: cash.cashUsd,
+    cashThb: cash.cashThb,
     holdingsCostUsd,
     holdingsCostThb,
     marketValueUsd: null,
     marketValueThb: null,
     pnlUsd: null,
     pnlThb: null,
+    realizedPnlUsd: realizedForeign.reduce((sum, row) => sum + row.pnl, 0),
+    realizedPnlThb: realizedThai.reduce((sum, row) => sum + row.pnl, 0),
+    realized,
     quotesAsOf: null,
-    dividendGrossUsd,
-    dividendNetUsd,
+    dividendGrossUsd: cash.dividendGrossUsd,
+    dividendNetUsd: cash.dividendNetUsd,
     holdingsThai,
     holdingsForeign,
+    accountCash: computeAccountCash(accounts, transfers, trades, dividends, cashEntries),
   };
 }
 

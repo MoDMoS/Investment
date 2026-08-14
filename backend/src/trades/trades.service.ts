@@ -1,34 +1,46 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { computeDashboard, tradeCost, tradeCostUsd } from '../dashboard/calc';
+import { AccountsService } from '../accounts/accounts.service';
+import { computeDashboard, tradeCost, tradeCostThb, tradeCostUsd } from '../dashboard/calc';
 import { parseDateOnly, toDateOnly } from '../fx';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertTradeDto } from './dto/upsert-trade.dto';
 
 @Injectable()
 export class TradesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accounts: AccountsService,
+  ) {}
 
   async list(userId: string) {
+    await this.accounts.ensureDefaults(userId);
     const rows = await this.prisma.trade.findMany({
       where: { userId },
+      include: { account: { select: { name: true } } },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
     return rows.map(serializeTrade);
   }
 
   async create(userId: string, dto: UpsertTradeDto) {
-    const cashWarning = await this.willExceedCash(userId, dto);
+    const market = dto.market === 'th' ? 'th' : 'foreign';
+    const account = await this.accounts.resolve(userId, dto.accountId, market);
+    const cashWarning = await this.willExceedCash(userId, dto, account.id);
     const row = await this.prisma.trade.create({
-      data: this.toData(userId, dto),
+      data: this.toData(userId, dto, account.id),
+      include: { account: { select: { name: true } } },
     });
     return { ...serializeTrade(row), cashWarning };
   }
 
   async update(userId: string, id: string, dto: UpsertTradeDto) {
     await this.ensureOwned(userId, id);
+    const market = dto.market === 'th' ? 'th' : 'foreign';
+    const account = await this.accounts.resolve(userId, dto.accountId, market);
     const row = await this.prisma.trade.update({
       where: { id },
-      data: this.toData(userId, dto),
+      data: this.toData(userId, dto, account.id),
+      include: { account: { select: { name: true } } },
     });
     return serializeTrade(row);
   }
@@ -39,9 +51,10 @@ export class TradesService {
     return { ok: true };
   }
 
-  private toData(userId: string, dto: UpsertTradeDto) {
+  private toData(userId: string, dto: UpsertTradeDto, accountId: string) {
     return {
       userId,
+      accountId,
       date: parseDateOnly(dto.date),
       ticker: dto.ticker.trim().toUpperCase(),
       market: dto.market === 'th' ? 'th' : 'foreign',
@@ -53,25 +66,47 @@ export class TradesService {
     };
   }
 
-  private async willExceedCash(userId: string, dto: UpsertTradeDto) {
-    if (dto.side !== 'buy' || dto.market === 'th') return false;
-    const [transfers, trades, dividends] = await Promise.all([
-      this.prisma.fxTransfer.findMany({ where: { userId } }),
-      this.prisma.trade.findMany({ where: { userId } }),
-      this.prisma.dividend.findMany({ where: { userId } }),
+  private async willExceedCash(
+    userId: string,
+    dto: UpsertTradeDto,
+    accountId: string,
+  ) {
+    if (dto.side !== 'buy') return false;
+    const market = dto.market === 'th' ? 'th' : 'foreign';
+    const [transfers, trades, dividends, cashRows] = await Promise.all([
+      this.prisma.fxTransfer.findMany({ where: { userId, accountId } }),
+      this.prisma.trade.findMany({ where: { userId, accountId } }),
+      this.prisma.dividend.findMany({ where: { userId, accountId } }),
+      this.prisma.cashEntry.findMany({
+        where: { userId, accountId },
+        include: { account: { select: { kind: true } } },
+      }),
     ]);
-    const summary = computeDashboard(transfers, trades, dividends);
-    const cost = tradeCostUsd({
+    const summary = computeDashboard(
+      transfers,
+      trades,
+      dividends,
+      cashRows.map((row) => ({
+        accountId: row.accountId,
+        direction: row.direction,
+        amount: row.amount,
+        kind: row.account.kind === 'th' ? 'th' : 'foreign',
+      })),
+    );
+    const tradeRow = {
       date: parseDateOnly(dto.date),
       createdAt: new Date(),
       ticker: dto.ticker,
-      market: 'foreign',
+      market,
       side: dto.side,
       shares: dto.shares,
       priceUsd: dto.priceUsd,
       feeUsd: dto.feeUsd ?? 0,
-    });
-    return cost > summary.cashUsd + 1e-8;
+    };
+    if (market === 'th') {
+      return tradeCostThb(tradeRow) > summary.cashThb + 1e-8;
+    }
+    return tradeCostUsd(tradeRow) > summary.cashUsd + 1e-8;
   }
 
   private async ensureOwned(userId: string, id: string) {
@@ -84,6 +119,8 @@ export class TradesService {
 
 function serializeTrade(row: {
   id: string;
+  accountId: string | null;
+  account?: { name: string } | null;
   date: Date;
   ticker: string;
   market: string;
@@ -96,6 +133,8 @@ function serializeTrade(row: {
   const market = row.market === 'th' ? 'th' : 'foreign';
   return {
     id: row.id,
+    accountId: row.accountId,
+    accountName: row.account?.name ?? '',
     date: toDateOnly(row.date),
     ticker: row.ticker,
     market,

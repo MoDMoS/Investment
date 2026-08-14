@@ -1,25 +1,33 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AccountsService } from '../accounts/accounts.service';
 import { parseDateOnly, resolveFxAmounts, toDateOnly } from '../fx';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertTransferDto } from './dto/upsert-transfer.dto';
 
 @Injectable()
 export class TransfersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accounts: AccountsService,
+  ) {}
 
   async list(userId: string) {
+    await this.accounts.ensureDefaults(userId);
     const rows = await this.prisma.fxTransfer.findMany({
       where: { userId },
+      include: { account: { select: { name: true } } },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
     return rows.map(serializeTransfer);
   }
 
   async create(userId: string, dto: UpsertTransferDto) {
+    const account = await this.accounts.resolve(userId, dto.accountId, 'foreign');
     const amounts = resolveFxAmounts(dto);
     const row = await this.prisma.fxTransfer.create({
       data: {
         userId,
+        accountId: account.id,
         date: parseDateOnly(dto.date),
         direction: dto.direction,
         ...amounts,
@@ -27,16 +35,19 @@ export class TransfersService {
         feeUsd: dto.feeUsd ?? 0,
         note: dto.note?.trim() ?? '',
       },
+      include: { account: { select: { name: true } } },
     });
     return serializeTransfer(row);
   }
 
   async update(userId: string, id: string, dto: UpsertTransferDto) {
     await this.ensureOwned(userId, id);
+    const account = await this.accounts.resolve(userId, dto.accountId, 'foreign');
     const amounts = resolveFxAmounts(dto);
     const row = await this.prisma.fxTransfer.update({
       where: { id },
       data: {
+        accountId: account.id,
         date: parseDateOnly(dto.date),
         direction: dto.direction,
         ...amounts,
@@ -44,6 +55,7 @@ export class TransfersService {
         feeUsd: dto.feeUsd ?? 0,
         note: dto.note?.trim() ?? '',
       },
+      include: { account: { select: { name: true } } },
     });
     return serializeTransfer(row);
   }
@@ -66,6 +78,8 @@ export class TransfersService {
 
 function serializeTransfer(row: {
   id: string;
+  accountId: string | null;
+  account?: { name: string } | null;
   date: Date;
   direction: string;
   thbAmount: number;
@@ -77,6 +91,8 @@ function serializeTransfer(row: {
 }) {
   return {
     id: row.id,
+    accountId: row.accountId,
+    accountName: row.account?.name ?? '',
     date: toDateOnly(row.date),
     direction: row.direction,
     thbAmount: row.thbAmount,

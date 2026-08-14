@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { firstAccountId, useAccounts } from '../accounts';
 import { api } from '../api';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { SortTh } from '../components/SortTh';
@@ -8,6 +9,7 @@ import type { Market, Trade } from '../types';
 
 type FormState = {
   date: string;
+  accountId: string;
   ticker: string;
   market: Market;
   side: 'buy' | 'sell';
@@ -19,6 +21,7 @@ type FormState = {
 
 const empty = (): FormState => ({
   date: todayIso(),
+  accountId: '',
   ticker: '',
   market: 'foreign',
   side: 'buy',
@@ -30,6 +33,7 @@ const empty = (): FormState => ({
 
 export function TradesPage() {
   const money = useMoneyFmt();
+  const { accounts } = useAccounts();
   const [rows, setRows] = useState<Trade[]>([]);
   const [form, setForm] = useState<FormState>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,6 +54,12 @@ export function TradesPage() {
     load().catch((err) => setError(apiError(err, 'โหลดรายการไม่สำเร็จ')));
   }, []);
 
+  useEffect(() => {
+    if (form.accountId) return;
+    const id = firstAccountId(accounts, form.market);
+    if (id) setForm((prev) => ({ ...prev, accountId: id }));
+  }, [accounts, form.accountId, form.market]);
+
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -61,6 +71,7 @@ export function TradesPage() {
     setSubmitting(true);
     const body = {
       date: form.date,
+      accountId: form.accountId,
       ticker: form.ticker,
       market: form.market,
       side: form.side,
@@ -75,7 +86,11 @@ export function TradesPage() {
       } else {
         const created = await api.post<Trade>('/trades', body);
         if (created.cashWarning) {
-          setWarning('ซื้อเกินเงินสด USD ที่มีในขณะนี้ (ยังบันทึกไว้แล้ว)');
+          setWarning(
+            form.market === 'th'
+              ? 'ซื้อเกินเงินสดบาทในบัญชีนี้ (ยังบันทึกไว้แล้ว)'
+              : 'ซื้อเกินเงินสด USD ในบัญชีนี้ (ยังบันทึกไว้แล้ว)',
+          );
         }
       }
       setForm(empty());
@@ -92,6 +107,7 @@ export function TradesPage() {
     setEditingId(row.id);
     setForm({
       date: row.date,
+      accountId: row.accountId ?? '',
       ticker: row.ticker,
       market: row.market ?? 'foreign',
       side: row.side,
@@ -162,11 +178,35 @@ export function TradesPage() {
           <span className="label">ตลาด</span>
           <select
             value={form.market}
-            onChange={(e) => set('market', e.target.value as Market)}
+            onChange={(e) => {
+              const market = e.target.value as Market;
+              setForm((prev) => ({
+                ...prev,
+                market,
+                accountId: firstAccountId(accounts, market),
+              }));
+            }}
             className="input"
           >
             <option value="foreign">หุ้นนอก</option>
             <option value="th">หุ้นไทย</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">บัญชี</span>
+          <select
+            required
+            value={form.accountId}
+            onChange={(e) => set('accountId', e.target.value)}
+            className="input"
+          >
+            {accounts
+              .filter((row) => row.kind === form.market)
+              .map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.name}
+                </option>
+              ))}
           </select>
         </label>
         <label className="block">
@@ -327,6 +367,7 @@ export function TradesPage() {
                     dir={sortDir}
                     onClick={() => toggleSort('date')}
                   />
+                  <th>บัญชี</th>
                   <SortTh
                     label="ตลาด"
                     active={sortKey === 'market'}
@@ -376,6 +417,7 @@ export function TradesPage() {
                     className={row.side === 'buy' ? 'trade-buy' : 'trade-sell'}
                   >
                     <td>{row.date}</td>
+                    <td>{row.accountName}</td>
                     <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
                     <td className="font-medium">{row.ticker}</td>
                     <td className="font-semibold">{row.side === 'buy' ? 'ซื้อ' : 'ขาย'}</td>

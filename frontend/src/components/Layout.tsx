@@ -34,6 +34,9 @@ export function Layout() {
             <NavLink to="/dividends" className={linkClass}>
               ปันผล
             </NavLink>
+            <NavLink to="/accounts" className={linkClass}>
+              บัญชี
+            </NavLink>
             <button
               type="button"
               onClick={() => void logout()}
