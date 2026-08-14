@@ -28,6 +28,8 @@ export const fmt = {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     }).format(value),
+  signed: (format: (value: number) => string, value: number) =>
+    `${value > 0 ? '+' : ''}${format(value)}`,
 };
 
 export function todayIso() {

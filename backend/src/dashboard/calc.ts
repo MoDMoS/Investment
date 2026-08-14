@@ -21,6 +21,10 @@ export type Holding = {
   shares: number;
   avgCost: number;
   totalCost: number;
+  lastPrice: number | null;
+  marketValue: number | null;
+  pnl: number | null;
+  pnlPct: number | null;
 };
 
 export type DividendRow = {
@@ -36,6 +40,11 @@ export type DashboardSummary = {
   cashUsd: number;
   holdingsCostUsd: number;
   holdingsCostThb: number;
+  marketValueUsd: number | null;
+  marketValueThb: number | null;
+  pnlUsd: number | null;
+  pnlThb: number | null;
+  quotesAsOf: string | null;
   dividendGrossUsd: number;
   dividendNetUsd: number;
   holdingsThai: Holding[];
@@ -92,6 +101,10 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
       shares: value.shares,
       avgCost: value.cost / value.shares,
       totalCost: value.cost,
+      lastPrice: null,
+      marketValue: null,
+      pnl: null,
+      pnlPct: null,
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker));
 }
@@ -139,9 +152,52 @@ export function computeDashboard(
     cashUsd: usdOut - usdIn + tradeCash + dividendNetUsd,
     holdingsCostUsd,
     holdingsCostThb,
+    marketValueUsd: null,
+    marketValueThb: null,
+    pnlUsd: null,
+    pnlThb: null,
+    quotesAsOf: null,
     dividendGrossUsd,
     dividendNetUsd,
     holdingsThai,
     holdingsForeign,
+  };
+}
+
+export function yahooSymbol(ticker: string, market: 'th' | 'foreign') {
+  const symbol = ticker.trim().toUpperCase();
+  if (!symbol) return symbol;
+  if (symbol.includes('.')) return symbol;
+  return market === 'th' ? `${symbol}.BK` : symbol;
+}
+
+export function applyQuotes(
+  holdings: Holding[],
+  prices: Map<string, number>,
+): Holding[] {
+  return holdings.map((row) => {
+    const price =
+      prices.get(yahooSymbol(row.ticker, row.market)) ?? prices.get(row.ticker.toUpperCase());
+    if (price == null) return row;
+    const marketValue = row.shares * price;
+    const pnl = marketValue - row.totalCost;
+    return {
+      ...row,
+      lastPrice: price,
+      marketValue,
+      pnl,
+      pnlPct: row.totalCost > 0 ? pnl / row.totalCost : null,
+    };
+  });
+}
+
+export function quotedTotals(holdings: Holding[]) {
+  const priced = holdings.filter((row) => row.marketValue != null && row.pnl != null);
+  if (priced.length === 0) {
+    return { marketValue: null as number | null, pnl: null as number | null };
+  }
+  return {
+    marketValue: priced.reduce((sum, row) => sum + (row.marketValue ?? 0), 0),
+    pnl: priced.reduce((sum, row) => sum + (row.pnl ?? 0), 0),
   };
 }

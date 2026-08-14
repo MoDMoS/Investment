@@ -10,13 +10,29 @@ export function DashboardPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api
-      .get<Dashboard>('/dashboard')
-      .then(setData)
-      .catch((err) => setError(apiError(err, 'โหลดภาพรวมไม่สำเร็จ')));
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const next = await api.get<Dashboard>('/dashboard');
+        if (!cancelled) {
+          setData(next);
+          setError('');
+        }
+      } catch (err) {
+        if (!cancelled) setError(apiError(err, 'โหลดภาพรวมไม่สำเร็จ'));
+      }
+    }
+
+    void load();
+    const timer = window.setInterval(() => void load(), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
-  if (error) return <p className="text-red-700">{error}</p>;
+  if (error && !data) return <p className="text-red-700">{error}</p>;
   if (!data) return <p className="text-stone-500">กำลังโหลด...</p>;
 
   return (
@@ -24,7 +40,7 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
         <p className="text-sm text-stone-500">
-          สรุปเงินเข้าออกประเทศ และแยกหุ้นไทยกับหุ้นนอกตามต้นทุนที่บันทึก
+          ราคาตลาดดึงจาก Yahoo แบบฟรี (หน่วงได้) รีเฟรชทุก 1 นาที ไม่ใช่ราคาซื้อขายจริงทุกวินาที
         </p>
       </div>
 
@@ -32,18 +48,32 @@ export function DashboardPage() {
         <Card label="เงินออกประเทศ" value={fmt.thb(data.thbOut)} />
         <Card label="เงินนำกลับ" value={fmt.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
         <Card label="สุทธิต่างประเทศ" value={fmt.thb(data.thbNetAbroad)} />
-        <Card
-          label="เรทเฉลี่ยเงินออก"
-          value={data.avgOutRate ? `${fmt.rate(data.avgOutRate)} บาท/USD` : '—'}
-        />
         <Card label="เงินสด USD" value={fmt.usd(data.cashUsd)} />
+        <Card
+          label="มูลค่าหุ้นนอก"
+          value={data.marketValueUsd != null ? fmt.usd(data.marketValueUsd) : '—'}
+          hint={`ต้นทุน ${fmt.usd(data.holdingsCostUsd)}`}
+        />
+        <Card
+          label="P/L หุ้นนอก"
+          value={data.pnlUsd != null ? fmt.signed(fmt.usd, data.pnlUsd) : '—'}
+          tone={tone(data.pnlUsd)}
+        />
+        <Card
+          label="มูลค่าหุ้นไทย"
+          value={data.marketValueThb != null ? fmt.thb(data.marketValueThb) : '—'}
+          hint={`ต้นทุน ${fmt.thb(data.holdingsCostThb)}`}
+        />
+        <Card
+          label="P/L หุ้นไทย"
+          value={data.pnlThb != null ? fmt.signed(fmt.thb, data.pnlThb) : '—'}
+          tone={tone(data.pnlThb)}
+        />
         <Card
           label="ปันผลสุทธิ"
           value={fmt.usd(data.dividendNetUsd)}
           hint="เข้าเงินสด USD ยังไม่ใช่เงินนำกลับไทย"
         />
-        <Card label="ต้นทุนหุ้นนอก" value={fmt.usd(data.holdingsCostUsd)} />
-        <Card label="ต้นทุนหุ้นไทย" value={fmt.thb(data.holdingsCostThb)} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -75,7 +105,11 @@ function HoldingsCard({
   money: (value: number) => string;
   empty: string;
 }) {
-  const total = holdings.reduce((sum, row) => sum + row.totalCost, 0);
+  const hasQuotes = holdings.some((row) => row.marketValue != null);
+  const total = holdings.reduce(
+    (sum, row) => sum + (row.marketValue ?? row.totalCost),
+    0,
+  );
   return (
     <section className="card space-y-4">
       <div className="flex items-center justify-between">
@@ -85,9 +119,12 @@ function HoldingsCard({
         </Link>
       </div>
       <DonutChart
-        slices={holdings.map((row) => ({ label: row.ticker, value: row.totalCost }))}
+        slices={holdings.map((row) => ({
+          label: row.ticker,
+          value: row.marketValue ?? row.totalCost,
+        }))}
         center={total ? money(total) : '—'}
-        sub="ตามต้นทุน"
+        sub={hasQuotes ? 'ตามมูลค่าตลาด' : 'ตามต้นทุน'}
       />
       {holdings.length === 0 ? (
         <p className="text-sm text-stone-500">{empty}</p>
@@ -98,8 +135,9 @@ function HoldingsCard({
               <tr>
                 <th>หุ้น</th>
                 <th className="text-right">จำนวน</th>
-                <th className="text-right">ต้นทุนเฉลี่ย</th>
-                <th className="text-right">ต้นทุนรวม</th>
+                <th className="text-right">ราคา</th>
+                <th className="text-right">มูลค่า</th>
+                <th className="text-right">P/L</th>
               </tr>
             </thead>
             <tbody>
@@ -107,8 +145,19 @@ function HoldingsCard({
                 <tr key={`${row.market}-${row.ticker}`}>
                   <td className="font-medium">{row.ticker}</td>
                   <td className="text-right">{fmt.shares(row.shares)}</td>
-                  <td className="text-right">{money(row.avgCost)}</td>
-                  <td className="text-right">{money(row.totalCost)}</td>
+                  <td className="text-right">
+                    {row.lastPrice != null ? money(row.lastPrice) : '—'}
+                  </td>
+                  <td className="text-right">
+                    {row.marketValue != null ? money(row.marketValue) : money(row.totalCost)}
+                  </td>
+                  <td className={`text-right font-medium ${pnlClass(row.pnl)}`}>
+                    {row.pnl != null
+                      ? `${fmt.signed(money, row.pnl)}${
+                          row.pnlPct != null ? ` (${fmt.number(row.pnlPct * 100, 1)}%)` : ''
+                        }`
+                      : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -123,16 +172,30 @@ function Card({
   label,
   value,
   hint,
+  tone,
 }: {
   label: string;
   value: string;
   hint?: string;
+  tone?: 'up' | 'down' | 'flat';
 }) {
+  const color =
+    tone === 'up' ? 'text-emerald-800' : tone === 'down' ? 'text-red-700' : 'text-stone-900';
   return (
     <div className="card">
       <p className="text-sm text-stone-500">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-stone-900">{value}</p>
+      <p className={`mt-2 text-xl font-semibold ${color}`}>{value}</p>
       {hint ? <p className="mt-1 text-xs text-stone-400">{hint}</p> : null}
     </div>
   );
+}
+
+function tone(value: number | null): 'up' | 'down' | 'flat' {
+  if (value == null || value === 0) return 'flat';
+  return value > 0 ? 'up' : 'down';
+}
+
+function pnlClass(value: number | null) {
+  if (value == null || value === 0) return 'text-stone-700';
+  return value > 0 ? 'text-emerald-800' : 'text-red-700';
 }

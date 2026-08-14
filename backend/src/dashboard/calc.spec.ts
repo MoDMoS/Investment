@@ -1,4 +1,10 @@
-import { computeDashboard, computeHoldings } from './calc';
+import {
+  applyQuotes,
+  computeDashboard,
+  computeHoldings,
+  quotedTotals,
+  yahooSymbol,
+} from './calc';
 
 describe('computeHoldings', () => {
   it('uses weighted average after buys and reduces cost on sell', () => {
@@ -111,5 +117,34 @@ describe('computeDashboard', () => {
     expect(summary.dividendGrossUsd).toBe(10);
     expect(summary.dividendNetUsd).toBe(8.5);
     expect(summary.cashUsd).toBe(1008.5);
+  });
+});
+
+describe('yahoo quotes helpers', () => {
+  it('maps Thai tickers to .BK and applies live prices', () => {
+    expect(yahooSymbol('PTT', 'th')).toBe('PTT.BK');
+    expect(yahooSymbol('AAPL', 'foreign')).toBe('AAPL');
+    expect(yahooSymbol('PTT.BK', 'th')).toBe('PTT.BK');
+
+    const priced = applyQuotes(
+      [
+        {
+          ticker: 'AAPL',
+          market: 'foreign',
+          shares: 2,
+          avgCost: 100,
+          totalCost: 200,
+          lastPrice: null,
+          marketValue: null,
+          pnl: null,
+          pnlPct: null,
+        },
+      ],
+      new Map([['AAPL', 150]]),
+    );
+    expect(priced[0].lastPrice).toBe(150);
+    expect(priced[0].marketValue).toBe(300);
+    expect(priced[0].pnl).toBe(100);
+    expect(quotedTotals(priced).pnl).toBe(100);
   });
 });

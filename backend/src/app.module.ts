@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { DividendsModule } from './dividends/dividends.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { QuotesModule } from './quotes/quotes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TradesModule } from './trades/trades.module';
 import { TransfersModule } from './transfers/transfers.module';
@@ -13,6 +14,7 @@ import { TransfersModule } from './transfers/transfers.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    QuotesModule,
     AuthModule,
     TransfersModule,
     TradesModule,

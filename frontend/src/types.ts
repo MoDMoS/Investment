@@ -49,6 +49,10 @@ export type Holding = {
   shares: number;
   avgCost: number;
   totalCost: number;
+  lastPrice: number | null;
+  marketValue: number | null;
+  pnl: number | null;
+  pnlPct: number | null;
 };
 
 export type Dashboard = {
@@ -59,6 +63,11 @@ export type Dashboard = {
   cashUsd: number;
   holdingsCostUsd: number;
   holdingsCostThb: number;
+  marketValueUsd: number | null;
+  marketValueThb: number | null;
+  pnlUsd: number | null;
+  pnlThb: number | null;
+  quotesAsOf: string | null;
   dividendGrossUsd: number;
   dividendNetUsd: number;
   holdingsThai: Holding[];
