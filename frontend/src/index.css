@@ -90,3 +90,32 @@ body {
   color: #78716c;
   font-weight: 500;
 }
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.table th.sortable button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.table th.sortable:hover {
+  color: #065f46;
+}
+
+.table tr.trade-buy td {
+  background: #ecfdf5;
+  color: #14532d;
+}
+
+.table tr.trade-sell td {
+  background: #fef2f2;
+  color: #9f1239;
+}

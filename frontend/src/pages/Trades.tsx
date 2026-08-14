@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { apiError, fmt, todayIso } from '../format';
 import type { Market, Trade } from '../types';
@@ -32,6 +32,11 @@ export function TradesPage() {
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [tickerQuery, setTickerQuery] = useState('');
+  const [marketFilter, setMarketFilter] = useState<'all' | Market>('all');
+  const [sideFilter, setSideFilter] = useState<'all' | 'buy' | 'sell'>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   async function load() {
     setRows(await api.get<Trade[]>('/trades'));
@@ -101,6 +106,28 @@ export function TradesPage() {
       setForm(empty());
     }
     await load();
+  }
+
+  const visibleRows = useMemo(() => {
+    const query = tickerQuery.trim().toUpperCase();
+    const filtered = rows.filter((row) => {
+      if (query && !row.ticker.includes(query)) return false;
+      if (marketFilter !== 'all' && row.market !== marketFilter) return false;
+      if (sideFilter !== 'all' && row.side !== sideFilter) return false;
+      return true;
+    });
+    const copy = [...filtered];
+    copy.sort((a, b) => compareTrades(a, b, sortKey) * (sortDir === 'asc' ? 1 : -1));
+    return copy;
+  }, [rows, tickerQuery, marketFilter, sideFilter, sortKey, sortDir]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(key);
+    setSortDir(key === 'date' || key === 'totalUsd' || key === 'priceUsd' ? 'desc' : 'asc');
   }
 
   return (
@@ -224,52 +251,150 @@ export function TradesPage() {
         </div>
       </form>
 
-      <section className="card overflow-x-auto">
+      <section className="card space-y-4">
+        <div className="grid gap-3 md:grid-cols-4">
+          <label className="block">
+            <span className="label">ค้นหาหุ้น</span>
+            <input
+              value={tickerQuery}
+              onChange={(e) => setTickerQuery(e.target.value.toUpperCase())}
+              className="input"
+              placeholder="เช่น AAPL, PTT"
+            />
+          </label>
+          <label className="block">
+            <span className="label">ตลาด</span>
+            <select
+              value={marketFilter}
+              onChange={(e) => setMarketFilter(e.target.value as 'all' | Market)}
+              className="input"
+            >
+              <option value="all">ทั้งหมด</option>
+              <option value="foreign">หุ้นนอก</option>
+              <option value="th">หุ้นไทย</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="label">ด้าน</span>
+            <select
+              value={sideFilter}
+              onChange={(e) => setSideFilter(e.target.value as 'all' | 'buy' | 'sell')}
+              className="input"
+            >
+              <option value="all">ทั้งหมด</option>
+              <option value="buy">ซื้อ</option>
+              <option value="sell">ขาย</option>
+            </select>
+          </label>
+          <div className="flex items-end">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                setTickerQuery('');
+                setMarketFilter('all');
+                setSideFilter('all');
+                setSortKey('date');
+                setSortDir('desc');
+              }}
+            >
+              ล้างตัวกรอง
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-stone-500">
+          แสดง {visibleRows.length} จาก {rows.length} รายการ
+        </p>
         {rows.length === 0 ? (
           <p className="text-sm text-stone-500">ยังไม่มีรายการซื้อขาย</p>
+        ) : visibleRows.length === 0 ? (
+          <p className="text-sm text-stone-500">ไม่พบรายการตามตัวกรอง</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>ตลาด</th>
-                <th>หุ้น</th>
-                <th>ด้าน</th>
-                <th className="text-right">จำนวน</th>
-                <th className="text-right">ราคา</th>
-                <th className="text-right">รวม</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>{row.date}</td>
-                  <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
-                  <td className="font-medium">{row.ticker}</td>
-                  <td>{row.side === 'buy' ? 'ซื้อ' : 'ขาย'}</td>
-                  <td className="text-right">{fmt.shares(row.shares)}</td>
-                  <td className="text-right">
-                    {row.market === 'th' ? fmt.thb(row.priceUsd) : fmt.usd(row.priceUsd)}
-                  </td>
-                  <td className="text-right">
-                    {row.market === 'th' ? fmt.thb(row.totalUsd) : fmt.usd(row.totalUsd)}
-                  </td>
-                  <td className="text-right whitespace-nowrap">
-                    <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
-                      แก้
-                    </button>
-                    <button
-                      className="ml-3 text-sm text-red-700"
-                      onClick={() => void remove(row.id)}
-                    >
-                      ลบ
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <SortTh
+                    label="วันที่"
+                    active={sortKey === 'date'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('date')}
+                  />
+                  <SortTh
+                    label="ตลาด"
+                    active={sortKey === 'market'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('market')}
+                  />
+                  <SortTh
+                    label="หุ้น"
+                    active={sortKey === 'ticker'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('ticker')}
+                  />
+                  <SortTh
+                    label="ด้าน"
+                    active={sortKey === 'side'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('side')}
+                  />
+                  <SortTh
+                    label="จำนวน"
+                    align="right"
+                    active={sortKey === 'shares'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('shares')}
+                  />
+                  <SortTh
+                    label="ราคา"
+                    align="right"
+                    active={sortKey === 'priceUsd'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('priceUsd')}
+                  />
+                  <SortTh
+                    label="รวม"
+                    align="right"
+                    active={sortKey === 'totalUsd'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('totalUsd')}
+                  />
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {visibleRows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className={row.side === 'buy' ? 'trade-buy' : 'trade-sell'}
+                  >
+                    <td>{row.date}</td>
+                    <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
+                    <td className="font-medium">{row.ticker}</td>
+                    <td className="font-semibold">{row.side === 'buy' ? 'ซื้อ' : 'ขาย'}</td>
+                    <td className="text-right">{fmt.shares(row.shares)}</td>
+                    <td className="text-right">
+                      {row.market === 'th' ? fmt.thb(row.priceUsd) : fmt.usd(row.priceUsd)}
+                    </td>
+                    <td className="text-right">
+                      {row.market === 'th' ? fmt.thb(row.totalUsd) : fmt.usd(row.totalUsd)}
+                    </td>
+                    <td className="text-right whitespace-nowrap">
+                      <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
+                        แก้
+                      </button>
+                      <button
+                        className="ml-3 text-sm text-red-700"
+                        onClick={() => void remove(row.id)}
+                      >
+                        ลบ
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>
@@ -280,4 +405,40 @@ function numOrZero(value: string) {
   if (value.trim() === '') return 0;
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+type SortKey = 'date' | 'market' | 'ticker' | 'side' | 'shares' | 'priceUsd' | 'totalUsd';
+
+function compareTrades(a: Trade, b: Trade, key: SortKey) {
+  if (key === 'shares' || key === 'priceUsd' || key === 'totalUsd') {
+    return a[key] - b[key];
+  }
+  return String(a[key]).localeCompare(String(b[key]), 'th');
+}
+
+function SortTh({
+  label,
+  active,
+  dir,
+  align,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  dir: 'asc' | 'desc';
+  align?: 'right';
+  onClick: () => void;
+}) {
+  return (
+    <th className={`sortable ${align === 'right' ? 'text-right' : ''}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1 ${align === 'right' ? 'w-full justify-end' : ''}`}
+      >
+        {label}
+        <span className="text-xs">{active ? (dir === 'asc' ? '▲' : '▼') : '↕'}</span>
+      </button>
+    </th>
+  );
 }
