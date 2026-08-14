@@ -6,7 +6,7 @@ import { DonutChart } from '../components/DonutChart';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { apiError, fmt } from '../format';
 import { useMoneyFmt, usePrivacy } from '../privacy';
-import type { Dashboard, Holding, RealizedLot } from '../types';
+import type { Dashboard, Holding } from '../types';
 
 export function DashboardForeignPage() {
   const money = useMoneyFmt();

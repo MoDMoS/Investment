@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
 import { AccountsPage } from './pages/Accounts';
+import { DashboardPage } from './pages/Dashboard';
 import { DashboardForeignPage } from './pages/DashboardForeign';
 import { DashboardThaiPage } from './pages/DashboardThai';
 import { DividendsPage } from './pages/Dividends';
@@ -26,7 +27,7 @@ export function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<Protected />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/foreign" replace />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/foreign" element={<DashboardForeignPage />} />
           <Route path="/thai" element={<DashboardThaiPage />} />
           <Route path="/transfers" element={<TransfersPage />} />
@@ -35,7 +36,7 @@ export function App() {
           <Route path="/accounts" element={<AccountsPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/foreign" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

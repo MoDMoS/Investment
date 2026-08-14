@@ -22,6 +22,9 @@ export function Layout() {
             <p className="text-xs text-stone-500">{user?.name}</p>
           </div>
           <nav className="flex flex-wrap items-center gap-1">
+            <NavLink to="/" end className={linkClass}>
+              ภาพรวม
+            </NavLink>
             <NavLink to="/foreign" className={linkClass}>
               หุ้นนอก
             </NavLink>
