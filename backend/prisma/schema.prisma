@@ -84,6 +84,7 @@ model Dividend {
   account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   date      DateTime
   ticker    String
+  market    String   @default("foreign")
   shares    Float    @default(0)
   grossUsd  Float
   taxUsd    Float    @default(0)

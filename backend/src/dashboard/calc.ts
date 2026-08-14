@@ -45,6 +45,7 @@ export type RealizedLot = {
 export type DividendRow = {
   netUsd: number;
   grossUsd: number;
+  market?: string;
   accountId?: string | null;
 };
 
@@ -81,6 +82,8 @@ export type DashboardSummary = {
   quotesAsOf: string | null;
   dividendGrossUsd: number;
   dividendNetUsd: number;
+  dividendGrossThb: number;
+  dividendNetThb: number;
   holdingsThai: Holding[];
   holdingsForeign: Holding[];
   accountCash: AccountCash[];
@@ -215,11 +218,19 @@ function computeCash(
     if (thb) tradeCashThb = roundMoney(tradeCashThb + (trade.side === 'buy' ? -thb : thb));
   }
 
+  const foreignDividends = dividends.filter((row) => !isThaiMarket(row.market));
+  const thaiDividends = dividends.filter((row) => isThaiMarket(row.market));
   const dividendGrossUsd = roundMoney(
-    dividends.reduce((sum, row) => sum + row.grossUsd, 0),
+    foreignDividends.reduce((sum, row) => sum + row.grossUsd, 0),
   );
   const dividendNetUsd = roundMoney(
-    dividends.reduce((sum, row) => sum + row.netUsd, 0),
+    foreignDividends.reduce((sum, row) => sum + row.netUsd, 0),
+  );
+  const dividendGrossThb = roundMoney(
+    thaiDividends.reduce((sum, row) => sum + row.grossUsd, 0),
+  );
+  const dividendNetThb = roundMoney(
+    thaiDividends.reduce((sum, row) => sum + row.netUsd, 0),
   );
 
   return {
@@ -231,6 +242,8 @@ function computeCash(
     tradeCashThb,
     dividendGrossUsd,
     dividendNetUsd,
+    dividendGrossThb,
+    dividendNetThb,
     cashUsd: roundMoney(
       usdOut -
         usdIn +
@@ -238,7 +251,9 @@ function computeCash(
         dividendNetUsd +
         cashFromEntries(cashEntries, 'foreign'),
     ),
-    cashThb: roundMoney(cashFromEntries(cashEntries, 'th') + tradeCashThb),
+    cashThb: roundMoney(
+      cashFromEntries(cashEntries, 'th') + tradeCashThb + dividendNetThb,
+    ),
   };
 }
 
@@ -305,6 +320,8 @@ export function computeDashboard(
     quotesAsOf: null,
     dividendGrossUsd: cash.dividendGrossUsd,
     dividendNetUsd: cash.dividendNetUsd,
+    dividendGrossThb: cash.dividendGrossThb,
+    dividendNetThb: cash.dividendNetThb,
     holdingsThai,
     holdingsForeign,
     accountCash: computeAccountCash(accounts, transfers, trades, dividends, cashEntries),

@@ -159,6 +159,19 @@ describe('computeDashboard', () => {
     expect(summary.cashUsd).toBe(1008.5);
   });
 
+  it('adds Thai dividends to THB cash without affecting USD', () => {
+    const summary = computeDashboard(
+      [{ direction: 'out', thbAmount: 35500, usdAmount: 1000 }],
+      [],
+      [{ grossUsd: 100, netUsd: 90, market: 'th', accountId: 'thai' }],
+      [{ accountId: 'thai', direction: 'in', amount: 500, kind: 'th' }],
+    );
+
+    expect(summary.cashUsd).toBe(1000);
+    expect(summary.dividendNetThb).toBe(90);
+    expect(summary.cashThb).toBe(590);
+  });
+
   it('tracks Thai broker cash from deposits only, not Thai trades', () => {
     const summary = computeDashboard(
       [],

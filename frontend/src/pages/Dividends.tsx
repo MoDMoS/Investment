@@ -4,10 +4,11 @@ import { api } from '../api';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { apiError, fmt, todayIso } from '../format';
 import { useMoneyFmt } from '../privacy';
-import type { Dividend } from '../types';
+import type { Dividend, Market } from '../types';
 
 type FormState = {
   date: string;
+  market: Market;
   accountId: string;
   ticker: string;
   shares: string;
@@ -18,6 +19,7 @@ type FormState = {
 
 const empty = (): FormState => ({
   date: todayIso(),
+  market: 'foreign',
   accountId: '',
   ticker: '',
   shares: '',
@@ -45,9 +47,9 @@ export function DividendsPage() {
 
   useEffect(() => {
     if (form.accountId) return;
-    const id = firstAccountId(accounts, 'foreign');
+    const id = firstAccountId(accounts, form.market);
     if (id) setForm((prev) => ({ ...prev, accountId: id }));
-  }, [accounts, form.accountId]);
+  }, [accounts, form.accountId, form.market]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -59,6 +61,7 @@ export function DividendsPage() {
     setSubmitting(true);
     const body = {
       date: form.date,
+      market: form.market,
       accountId: form.accountId,
       ticker: form.ticker,
       shares: numOrUndef(form.shares) ?? 0,
@@ -86,6 +89,7 @@ export function DividendsPage() {
     setEditingId(row.id);
     setForm({
       date: row.date,
+      market: row.market ?? 'foreign',
       accountId: row.accountId ?? '',
       ticker: row.ticker,
       shares: row.shares ? String(row.shares) : '',
@@ -105,6 +109,8 @@ export function DividendsPage() {
     await load();
   }
 
+  const unit = form.market === 'th' ? 'บาท' : 'USD';
+
   return (
     <div className="space-y-6">
       <div>
@@ -113,8 +119,8 @@ export function DividendsPage() {
           <HideMoneyButton />
         </div>
         <p className="text-sm text-stone-500">
-          เงินปันผลเข้าเงินสด USD ในโบรกเกอร์ ยังไม่นับเป็นเงินนำกลับไทย
-          จนกว่าจะบันทึกแลกเงินเข้า
+          ปันผลหุ้นนอกเข้าเงินสด USD — ปันผลหุ้นไทยเข้าเงินสดบาทในโบรก
+          ยังไม่นับเป็นเงินนำกลับไทยจากการแลกเงิน
         </p>
       </div>
 
@@ -130,7 +136,25 @@ export function DividendsPage() {
           />
         </label>
         <label className="block">
-          <span className="label">บัญชีหุ้นนอก</span>
+          <span className="label">ตลาด</span>
+          <select
+            value={form.market}
+            onChange={(e) => {
+              const market = e.target.value as Market;
+              setForm((prev) => ({
+                ...prev,
+                market,
+                accountId: firstAccountId(accounts, market),
+              }));
+            }}
+            className="input"
+          >
+            <option value="foreign">หุ้นนอก</option>
+            <option value="th">หุ้นไทย</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">บัญชี</span>
           <select
             required
             value={form.accountId}
@@ -138,7 +162,7 @@ export function DividendsPage() {
             className="input"
           >
             {accounts
-              .filter((row) => row.kind === 'foreign')
+              .filter((row) => row.kind === form.market)
               .map((row) => (
                 <option key={row.id} value={row.id}>
                   {row.name}
@@ -153,7 +177,7 @@ export function DividendsPage() {
             value={form.ticker}
             onChange={(e) => set('ticker', e.target.value.toUpperCase())}
             className="input"
-            placeholder="AAPL"
+            placeholder={form.market === 'th' ? 'PTT' : 'AAPL'}
           />
         </label>
         <label className="block">
@@ -168,7 +192,7 @@ export function DividendsPage() {
           />
         </label>
         <label className="block">
-          <span className="label">ปันผลก่อนหักภาษี (USD)</span>
+          <span className="label">ปันผลก่อนหักภาษี ({unit})</span>
           <input
             type="number"
             step="any"
@@ -180,7 +204,7 @@ export function DividendsPage() {
           />
         </label>
         <label className="block">
-          <span className="label">ภาษีหัก ณ ที่จ่าย (USD)</span>
+          <span className="label">ภาษีหัก ณ ที่จ่าย ({unit})</span>
           <input
             type="number"
             step="any"
@@ -226,6 +250,7 @@ export function DividendsPage() {
             <thead>
               <tr>
                 <th>วันที่</th>
+                <th>ตลาด</th>
                 <th>บัญชี</th>
                 <th>หุ้น</th>
                 <th className="text-right">จำนวนหุ้น</th>
@@ -236,28 +261,34 @@ export function DividendsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>{row.date}</td>
-                  <td>{row.accountName}</td>
-                  <td className="font-medium">{row.ticker}</td>
-                  <td className="text-right">{row.shares ? fmt.shares(row.shares) : '—'}</td>
-                  <td className="text-right">{money.usd(row.grossUsd)}</td>
-                  <td className="text-right">{money.usd(row.taxUsd)}</td>
-                  <td className="text-right">{money.usd(row.netUsd)}</td>
-                  <td className="text-right whitespace-nowrap">
-                    <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
-                      แก้
-                    </button>
-                    <button
-                      className="ml-3 text-sm text-red-700"
-                      onClick={() => void remove(row.id)}
-                    >
-                      ลบ
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((row) => {
+                const fmtMoney = row.market === 'th' ? money.thb : money.usd;
+                return (
+                  <tr key={row.id}>
+                    <td>{row.date}</td>
+                    <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
+                    <td>{row.accountName}</td>
+                    <td className="font-medium">{row.ticker}</td>
+                    <td className="text-right">
+                      {row.shares ? fmt.shares(row.shares) : '—'}
+                    </td>
+                    <td className="text-right">{fmtMoney(row.grossUsd)}</td>
+                    <td className="text-right">{fmtMoney(row.taxUsd)}</td>
+                    <td className="text-right">{fmtMoney(row.netUsd)}</td>
+                    <td className="text-right whitespace-nowrap">
+                      <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
+                        แก้
+                      </button>
+                      <button
+                        className="ml-3 text-sm text-red-700"
+                        onClick={() => void remove(row.id)}
+                      >
+                        ลบ
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

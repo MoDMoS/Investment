@@ -60,6 +60,7 @@ export type Dividend = {
   accountName: string;
   date: string;
   ticker: string;
+  market: Market;
   shares: number;
   grossUsd: number;
   taxUsd: number;
@@ -109,6 +110,8 @@ export type Dashboard = {
   quotesAsOf: string | null;
   dividendGrossUsd: number;
   dividendNetUsd: number;
+  dividendGrossThb: number;
+  dividendNetThb: number;
   holdingsThai: Holding[];
   holdingsForeign: Holding[];
 };

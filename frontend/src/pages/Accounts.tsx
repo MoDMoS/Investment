@@ -145,7 +145,7 @@ export function AccountsPage() {
       );
       downloadCsv(
         `dividends-${stamp}.csv`,
-        ['id', 'accountId', 'date', 'ticker', 'shares', 'grossUsd', 'taxUsd', 'netUsd', 'note'],
+        ['id', 'accountId', 'date', 'ticker', 'market', 'shares', 'grossUsd', 'taxUsd', 'netUsd', 'note'],
         data.dividends,
       );
       downloadCsv(
@@ -189,6 +189,7 @@ export function AccountsPage() {
             <p className="mt-1 text-xl font-semibold">{money.thb(thaiCash.cash)}</p>
             <p className="mt-1 text-xs text-stone-400">
               เติมด้วยแบบฟอร์มด้านล่าง — ไม่ถูกหักตอนซื้อหุ้นไทย
+              ปันผลหุ้นไทยจะเข้ายอดนี้อัตโนมัติ
             </p>
           </div>
           <button

@@ -1,9 +1,10 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
-import { DashboardPage } from './pages/Dashboard';
-import { DividendsPage } from './pages/Dividends';
 import { AccountsPage } from './pages/Accounts';
+import { DashboardForeignPage } from './pages/DashboardForeign';
+import { DashboardThaiPage } from './pages/DashboardThai';
+import { DividendsPage } from './pages/Dividends';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { TradesPage } from './pages/Trades';
@@ -25,14 +26,16 @@ export function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<Protected />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<Navigate to="/foreign" replace />} />
+          <Route path="/foreign" element={<DashboardForeignPage />} />
+          <Route path="/thai" element={<DashboardThaiPage />} />
           <Route path="/transfers" element={<TransfersPage />} />
           <Route path="/trades" element={<TradesPage />} />
           <Route path="/dividends" element={<DividendsPage />} />
           <Route path="/accounts" element={<AccountsPage />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/foreign" replace />} />
     </Routes>
   );
 }

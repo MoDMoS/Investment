@@ -72,6 +72,7 @@ export class ExportService {
         accountId: row.accountId,
         date: toDateOnly(row.date),
         ticker: row.ticker,
+        market: row.market,
         shares: row.shares,
         grossUsd: row.grossUsd,
         taxUsd: row.taxUsd,

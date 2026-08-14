@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -15,6 +16,10 @@ export class UpsertDividendDto {
   @IsString()
   @MinLength(1)
   ticker!: string;
+
+  @IsOptional()
+  @IsIn(['th', 'foreign'])
+  market?: 'th' | 'foreign';
 
   @IsOptional()
   @Type(() => Number)
