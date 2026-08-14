@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 
-export function roundMoney(value: number, digits = 4): number {
+export function roundMoney(value: number, digits = 2): number {
   if (!Number.isFinite(value)) return 0;
   const factor = 10 ** digits;
   const rounded = Math.round((value + Number.EPSILON) * factor) / factor;

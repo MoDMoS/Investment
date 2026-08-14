@@ -194,7 +194,7 @@ describe('computeDashboard', () => {
           ticker: 'AAPL',
           side: 'buy',
           shares: 1,
-          priceUsd: Math.round(usd * 1e4) / 1e4,
+          priceUsd: Math.round(usd * 1e2) / 1e2,
           feeUsd: 0,
         },
       ],

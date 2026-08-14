@@ -4,7 +4,7 @@ const p = new PrismaClient();
 
 function round(v) {
   if (!Number.isFinite(v)) return 0;
-  const n = Math.round((v + Number.EPSILON) * 1e4) / 1e4;
+  const n = Math.round((v + Number.EPSILON) * 1e2) / 1e2;
   return n === 0 ? 0 : n;
 }
 

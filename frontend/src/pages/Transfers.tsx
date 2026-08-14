@@ -238,7 +238,7 @@ export function TransfersPage() {
                       setError('ดึงเรทตลาดไม่สำเร็จ');
                       return;
                     }
-                    set('rate', String(Number(quote.rate.toFixed(4))));
+                    set('rate', String(Number(quote.rate.toFixed(2))));
                   })
                   .catch((err) => setError(apiError(err, 'ดึงเรทตลาดไม่สำเร็จ')))
                   .finally(() => setRateLoading(false));
