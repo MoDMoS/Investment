@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { HideMoneyButton } from '../components/HideMoneyButton';
 import { SortTh } from '../components/SortTh';
 import { apiError, fmt, todayIso } from '../format';
 import { useMoneyFmt } from '../privacy';
@@ -136,7 +137,10 @@ export function TradesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">ซื้อขายหุ้น</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">ซื้อขายหุ้น</h1>
+          <HideMoneyButton />
+        </div>
         <p className="text-sm text-stone-500">
           แยกหุ้นไทย (ราคาเป็นบาท) กับหุ้นนอก (ราคาเป็น USD)
           ขายหุ้นนอกแล้วยังไม่นับเป็นเงินนำกลับ จนกว่าจะบันทึกแลกเงินเข้าไทย

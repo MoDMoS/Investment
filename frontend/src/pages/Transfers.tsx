@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { HideMoneyButton } from '../components/HideMoneyButton';
 import { SortTh } from '../components/SortTh';
 import { apiError, todayIso } from '../format';
 import { useMoneyFmt } from '../privacy';
@@ -130,7 +131,10 @@ export function TransfersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">แลกเงินเข้า–ออกประเทศ</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">แลกเงินเข้า–ออกประเทศ</h1>
+          <HideMoneyButton />
+        </div>
         <p className="text-sm text-stone-500">
           เงินนำกลับต้องกรอกเองเมื่อโอนเข้าไทยจริง กรอกอย่างน้อย 2 ใน 3 ของบาท / USD / เรท
         </p>

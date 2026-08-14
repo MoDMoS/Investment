@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { DonutChart } from '../components/DonutChart';
+import { HideMoneyButton } from '../components/HideMoneyButton';
 import { apiError, fmt } from '../format';
 import { useMoneyFmt, usePrivacy } from '../privacy';
 import type { Dashboard, Holding } from '../types';
@@ -41,7 +42,10 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
+          <HideMoneyButton />
+        </div>
         <p className="text-sm text-stone-500">
           ราคาตลาดดึงจาก Yahoo แบบฟรี (หน่วงได้) รีเฟรชทุก 1 นาที ไม่ใช่ราคาซื้อขายจริงทุกวินาที
         </p>

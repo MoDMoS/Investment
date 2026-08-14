@@ -8,7 +8,7 @@ import {
 import { fmt } from './format';
 
 const STORAGE_KEY = 'hide-amounts';
-const MASK = '••••';
+const MASK = '****';
 
 type PrivacyContextValue = {
   hidden: boolean;

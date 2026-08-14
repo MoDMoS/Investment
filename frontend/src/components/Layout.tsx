@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { usePrivacy } from '../privacy';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-2 text-sm font-medium ${
@@ -11,7 +10,6 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function Layout() {
   const { user, logout } = useAuth();
-  const { hidden, toggle } = usePrivacy();
 
   return (
     <div className="min-h-screen">
@@ -36,15 +34,6 @@ export function Layout() {
             <NavLink to="/dividends" className={linkClass}>
               ปันผล
             </NavLink>
-            <button
-              type="button"
-              onClick={toggle}
-              className="rounded-lg px-3 py-2 text-sm text-stone-500 hover:bg-stone-100"
-              aria-pressed={hidden}
-              title={hidden ? 'แสดงยอดเงิน' : 'ซ่อนยอดเงิน'}
-            >
-              {hidden ? 'แสดงยอด' : 'ซ่อนยอด'}
-            </button>
             <button
               type="button"
               onClick={() => void logout()}
