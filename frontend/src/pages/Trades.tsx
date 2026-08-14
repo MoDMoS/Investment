@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { SortTh } from '../components/SortTh';
 import { apiError, fmt, todayIso } from '../format';
 import type { Market, Trade } from '../types';
 
@@ -414,31 +415,4 @@ function compareTrades(a: Trade, b: Trade, key: SortKey) {
     return a[key] - b[key];
   }
   return String(a[key]).localeCompare(String(b[key]), 'th');
-}
-
-function SortTh({
-  label,
-  active,
-  dir,
-  align,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  dir: 'asc' | 'desc';
-  align?: 'right';
-  onClick: () => void;
-}) {
-  return (
-    <th className={`sortable ${align === 'right' ? 'text-right' : ''}`}>
-      <button
-        type="button"
-        onClick={onClick}
-        className={`inline-flex items-center gap-1 ${align === 'right' ? 'w-full justify-end' : ''}`}
-      >
-        {label}
-        <span className="text-xs">{active ? (dir === 'asc' ? '▲' : '▼') : '↕'}</span>
-      </button>
-    </th>
-  );
 }
