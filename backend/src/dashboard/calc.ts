@@ -8,6 +8,7 @@ export type TradeRow = {
   date: Date;
   createdAt: Date;
   ticker: string;
+  market?: string;
   side: string;
   shares: number;
   priceUsd: number;
@@ -16,9 +17,10 @@ export type TradeRow = {
 
 export type Holding = {
   ticker: string;
+  market: 'th' | 'foreign';
   shares: number;
-  avgCostUsd: number;
-  totalCostUsd: number;
+  avgCost: number;
+  totalCost: number;
 };
 
 export type DividendRow = {
@@ -33,18 +35,29 @@ export type DashboardSummary = {
   avgOutRate: number | null;
   cashUsd: number;
   holdingsCostUsd: number;
+  holdingsCostThb: number;
   dividendGrossUsd: number;
   dividendNetUsd: number;
-  holdings: Holding[];
+  holdingsThai: Holding[];
+  holdingsForeign: Holding[];
 };
 
-export function tradeCostUsd(trade: TradeRow): number {
+export function isThaiMarket(market?: string) {
+  return market === 'th';
+}
+
+export function tradeCost(trade: TradeRow): number {
   const notional = trade.shares * trade.priceUsd;
   return trade.side === 'buy' ? notional + trade.feeUsd : notional - trade.feeUsd;
 }
 
+export function tradeCostUsd(trade: TradeRow): number {
+  if (isThaiMarket(trade.market)) return 0;
+  return tradeCost(trade);
+}
+
 export function computeHoldings(trades: TradeRow[]): Holding[] {
-  const map = new Map<string, { shares: number; cost: number }>();
+  const map = new Map<string, { market: 'th' | 'foreign'; shares: number; cost: number }>();
   const sorted = [...trades].sort((a, b) => {
     const byDate = a.date.getTime() - b.date.getTime();
     if (byDate !== 0) return byDate;
@@ -52,8 +65,10 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
   });
 
   for (const trade of sorted) {
+    const market: 'th' | 'foreign' = isThaiMarket(trade.market) ? 'th' : 'foreign';
     const ticker = trade.ticker.toUpperCase();
-    const current = map.get(ticker) ?? { shares: 0, cost: 0 };
+    const key = `${market}:${ticker}`;
+    const current = map.get(key) ?? { market, shares: 0, cost: 0 };
     if (trade.side === 'buy') {
       current.shares += trade.shares;
       current.cost += trade.shares * trade.priceUsd + trade.feeUsd;
@@ -66,16 +81,17 @@ export function computeHoldings(trades: TradeRow[]): Holding[] {
         current.cost = 0;
       }
     }
-    map.set(ticker, current);
+    map.set(key, current);
   }
 
   return [...map.entries()]
     .filter(([, value]) => value.shares > 1e-10)
-    .map(([ticker, value]) => ({
-      ticker,
+    .map(([key, value]) => ({
+      ticker: key.slice(key.indexOf(':') + 1),
+      market: value.market,
       shares: value.shares,
-      avgCostUsd: value.cost / value.shares,
-      totalCostUsd: value.cost,
+      avgCost: value.cost / value.shares,
+      totalCost: value.cost,
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker));
 }
@@ -103,11 +119,15 @@ export function computeDashboard(
   let tradeCash = 0;
   for (const trade of trades) {
     const amount = tradeCostUsd(trade);
+    if (!amount) continue;
     tradeCash += trade.side === 'buy' ? -amount : amount;
   }
 
   const holdings = computeHoldings(trades);
-  const holdingsCostUsd = holdings.reduce((sum, row) => sum + row.totalCostUsd, 0);
+  const holdingsThai = holdings.filter((row) => row.market === 'th');
+  const holdingsForeign = holdings.filter((row) => row.market === 'foreign');
+  const holdingsCostThb = holdingsThai.reduce((sum, row) => sum + row.totalCost, 0);
+  const holdingsCostUsd = holdingsForeign.reduce((sum, row) => sum + row.totalCost, 0);
   const dividendGrossUsd = dividends.reduce((sum, row) => sum + row.grossUsd, 0);
   const dividendNetUsd = dividends.reduce((sum, row) => sum + row.netUsd, 0);
 
@@ -118,8 +138,10 @@ export function computeDashboard(
     avgOutRate: usdOut > 0 ? thbOut / usdOut : null,
     cashUsd: usdOut - usdIn + tradeCash + dividendNetUsd,
     holdingsCostUsd,
+    holdingsCostThb,
     dividendGrossUsd,
     dividendNetUsd,
-    holdings,
+    holdingsThai,
+    holdingsForeign,
   };
 }

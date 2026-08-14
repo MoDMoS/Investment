@@ -34,7 +34,8 @@ describe('computeHoldings', () => {
 
     expect(holdings).toHaveLength(1);
     expect(holdings[0].shares).toBe(3);
-    expect(holdings[0].avgCostUsd).toBe(150);
+    expect(holdings[0].avgCost).toBe(150);
+    expect(holdings[0].market).toBe('foreign');
   });
 });
 
@@ -71,8 +72,32 @@ describe('computeDashboard', () => {
     expect(summary.thbIn).toBe(17000);
     expect(summary.thbNetAbroad).toBe(18500);
     expect(summary.cashUsd).toBe(550);
-    expect(summary.holdings).toHaveLength(0);
+    expect(summary.holdingsForeign).toHaveLength(0);
+    expect(summary.holdingsThai).toHaveLength(0);
     expect(summary.dividendNetUsd).toBe(0);
+  });
+
+  it('keeps Thai stock cost in THB and out of USD cash', () => {
+    const summary = computeDashboard(
+      [{ direction: 'out', thbAmount: 35500, usdAmount: 1000 }],
+      [
+        {
+          date: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          ticker: 'PTT',
+          market: 'th',
+          side: 'buy',
+          shares: 100,
+          priceUsd: 30,
+          feeUsd: 0,
+        },
+      ],
+    );
+
+    expect(summary.cashUsd).toBe(1000);
+    expect(summary.holdingsCostThb).toBe(3000);
+    expect(summary.holdingsCostUsd).toBe(0);
+    expect(summary.holdingsThai[0].ticker).toBe('PTT');
   });
 
   it('adds net dividends to cash without counting as THB inbound', () => {

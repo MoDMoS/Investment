@@ -17,6 +17,10 @@ export class UpsertTradeDto {
   @MinLength(1)
   ticker!: string;
 
+  @IsOptional()
+  @IsIn(['th', 'foreign'])
+  market?: 'th' | 'foreign';
+
   @IsIn(['buy', 'sell'])
   side!: 'buy' | 'sell';
 

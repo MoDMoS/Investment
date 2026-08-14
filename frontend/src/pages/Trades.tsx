@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import { apiError, fmt, todayIso } from '../format';
-import type { Trade } from '../types';
+import type { Market, Trade } from '../types';
 
 type FormState = {
   date: string;
   ticker: string;
+  market: Market;
   side: 'buy' | 'sell';
   shares: string;
   priceUsd: string;
@@ -16,6 +17,7 @@ type FormState = {
 const empty = (): FormState => ({
   date: todayIso(),
   ticker: '',
+  market: 'foreign',
   side: 'buy',
   shares: '',
   priceUsd: '',
@@ -51,6 +53,7 @@ export function TradesPage() {
     const body = {
       date: form.date,
       ticker: form.ticker,
+      market: form.market,
       side: form.side,
       shares: Number(form.shares),
       priceUsd: Number(form.priceUsd),
@@ -81,6 +84,7 @@ export function TradesPage() {
     setForm({
       date: row.date,
       ticker: row.ticker,
+      market: row.market ?? 'foreign',
       side: row.side,
       shares: String(row.shares),
       priceUsd: String(row.priceUsd),
@@ -104,7 +108,8 @@ export function TradesPage() {
       <div>
         <h1 className="text-2xl font-semibold">ซื้อขายหุ้น</h1>
         <p className="text-sm text-stone-500">
-          ขายหุ้นแล้วยังไม่นับเป็นเงินนำกลับ จนกว่าจะบันทึกแลกเงินเข้าไทย
+          แยกหุ้นไทย (ราคาเป็นบาท) กับหุ้นนอก (ราคาเป็น USD)
+          ขายหุ้นนอกแล้วยังไม่นับเป็นเงินนำกลับ จนกว่าจะบันทึกแลกเงินเข้าไทย
         </p>
       </div>
 
@@ -118,6 +123,17 @@ export function TradesPage() {
             onChange={(e) => set('date', e.target.value)}
             className="input"
           />
+        </label>
+        <label className="block">
+          <span className="label">ตลาด</span>
+          <select
+            value={form.market}
+            onChange={(e) => set('market', e.target.value as Market)}
+            className="input"
+          >
+            <option value="foreign">หุ้นนอก</option>
+            <option value="th">หุ้นไทย</option>
+          </select>
         </label>
         <label className="block">
           <span className="label">ซื้อ / ขาย</span>
@@ -137,7 +153,7 @@ export function TradesPage() {
             value={form.ticker}
             onChange={(e) => set('ticker', e.target.value.toUpperCase())}
             className="input"
-            placeholder="AAPL"
+            placeholder={form.market === 'th' ? 'PTT' : 'AAPL'}
           />
         </label>
         <label className="block">
@@ -153,7 +169,9 @@ export function TradesPage() {
           />
         </label>
         <label className="block">
-          <span className="label">ราคาต่อหุ้น (USD)</span>
+          <span className="label">
+            {form.market === 'th' ? 'ราคาต่อหุ้น (บาท)' : 'ราคาต่อหุ้น (USD)'}
+          </span>
           <input
             type="number"
             step="any"
@@ -165,7 +183,9 @@ export function TradesPage() {
           />
         </label>
         <label className="block">
-          <span className="label">ค่าคอม USD</span>
+          <span className="label">
+            {form.market === 'th' ? 'ค่าคอม (บาท)' : 'ค่าคอม USD'}
+          </span>
           <input
             type="number"
             step="any"
@@ -212,11 +232,12 @@ export function TradesPage() {
             <thead>
               <tr>
                 <th>วันที่</th>
+                <th>ตลาด</th>
                 <th>หุ้น</th>
                 <th>ด้าน</th>
                 <th className="text-right">จำนวน</th>
                 <th className="text-right">ราคา</th>
-                <th className="text-right">รวม USD</th>
+                <th className="text-right">รวม</th>
                 <th />
               </tr>
             </thead>
@@ -224,11 +245,16 @@ export function TradesPage() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.date}</td>
+                  <td>{row.market === 'th' ? 'ไทย' : 'นอก'}</td>
                   <td className="font-medium">{row.ticker}</td>
                   <td>{row.side === 'buy' ? 'ซื้อ' : 'ขาย'}</td>
                   <td className="text-right">{fmt.shares(row.shares)}</td>
-                  <td className="text-right">{fmt.usd(row.priceUsd)}</td>
-                  <td className="text-right">{fmt.usd(row.totalUsd)}</td>
+                  <td className="text-right">
+                    {row.market === 'th' ? fmt.thb(row.priceUsd) : fmt.usd(row.priceUsd)}
+                  </td>
+                  <td className="text-right">
+                    {row.market === 'th' ? fmt.thb(row.totalUsd) : fmt.usd(row.totalUsd)}
+                  </td>
                   <td className="text-right whitespace-nowrap">
                     <button className="text-sm text-emerald-800" onClick={() => edit(row)}>
                       แก้

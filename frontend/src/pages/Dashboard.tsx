@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { DonutChart } from '../components/DonutChart';
 import { apiError, fmt } from '../format';
-import type { Dashboard } from '../types';
+import type { Dashboard, Holding } from '../types';
 
 export function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
@@ -23,7 +24,7 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมพอร์ต</h1>
         <p className="text-sm text-stone-500">
-          สรุปเงินเข้าออกประเทศและหุ้นที่ถือจากต้นทุนที่บันทึก
+          สรุปเงินเข้าออกประเทศ และแยกหุ้นไทยกับหุ้นนอกตามต้นทุนที่บันทึก
         </p>
       </div>
 
@@ -41,49 +42,80 @@ export function DashboardPage() {
           value={fmt.usd(data.dividendNetUsd)}
           hint="เข้าเงินสด USD ยังไม่ใช่เงินนำกลับไทย"
         />
-        <Card label="ต้นทุนหุ้นที่ถือ" value={fmt.usd(data.holdingsCostUsd)} />
+        <Card label="ต้นทุนหุ้นนอก" value={fmt.usd(data.holdingsCostUsd)} />
+        <Card label="ต้นทุนหุ้นไทย" value={fmt.thb(data.holdingsCostThb)} />
       </div>
 
-      <section className="card">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">หุ้นที่ถืออยู่</h2>
-          <div className="flex gap-3 text-sm">
-            <Link to="/trades" className="text-emerald-800">
-              บันทึกซื้อขาย
-            </Link>
-            <Link to="/dividends" className="text-emerald-800">
-              บันทึกปันผล
-            </Link>
-          </div>
-        </div>
-        {data.holdings.length === 0 ? (
-          <p className="text-sm text-stone-500">ยังไม่มีหุ้นในพอร์ต</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>หุ้น</th>
-                  <th className="text-right">จำนวน</th>
-                  <th className="text-right">ต้นทุนเฉลี่ย</th>
-                  <th className="text-right">ต้นทุนรวม</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.holdings.map((row) => (
-                  <tr key={row.ticker}>
-                    <td className="font-medium">{row.ticker}</td>
-                    <td className="text-right">{fmt.shares(row.shares)}</td>
-                    <td className="text-right">{fmt.usd(row.avgCostUsd)}</td>
-                    <td className="text-right">{fmt.usd(row.totalCostUsd)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <HoldingsCard
+          title="หุ้นนอก"
+          holdings={data.holdingsForeign}
+          money={fmt.usd}
+          empty="ยังไม่มีหุ้นนอก"
+        />
+        <HoldingsCard
+          title="หุ้นไทย"
+          holdings={data.holdingsThai}
+          money={fmt.thb}
+          empty="ยังไม่มีหุ้นไทย"
+        />
+      </div>
     </div>
+  );
+}
+
+function HoldingsCard({
+  title,
+  holdings,
+  money,
+  empty,
+}: {
+  title: string;
+  holdings: Holding[];
+  money: (value: number) => string;
+  empty: string;
+}) {
+  const total = holdings.reduce((sum, row) => sum + row.totalCost, 0);
+  return (
+    <section className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <Link to="/trades" className="text-sm text-emerald-800">
+          บันทึกซื้อขาย
+        </Link>
+      </div>
+      <DonutChart
+        slices={holdings.map((row) => ({ label: row.ticker, value: row.totalCost }))}
+        center={total ? money(total) : '—'}
+        sub="ตามต้นทุน"
+      />
+      {holdings.length === 0 ? (
+        <p className="text-sm text-stone-500">{empty}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>หุ้น</th>
+                <th className="text-right">จำนวน</th>
+                <th className="text-right">ต้นทุนเฉลี่ย</th>
+                <th className="text-right">ต้นทุนรวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              {holdings.map((row) => (
+                <tr key={`${row.market}-${row.ticker}`}>
+                  <td className="font-medium">{row.ticker}</td>
+                  <td className="text-right">{fmt.shares(row.shares)}</td>
+                  <td className="text-right">{money(row.avgCost)}</td>
+                  <td className="text-right">{money(row.totalCost)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

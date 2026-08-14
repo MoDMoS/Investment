@@ -16,10 +16,13 @@ export type Transfer = {
   note: string;
 };
 
+export type Market = 'th' | 'foreign';
+
 export type Trade = {
   id: string;
   date: string;
   ticker: string;
+  market: Market;
   side: 'buy' | 'sell';
   shares: number;
   priceUsd: number;
@@ -42,9 +45,10 @@ export type Dividend = {
 
 export type Holding = {
   ticker: string;
+  market: Market;
   shares: number;
-  avgCostUsd: number;
-  totalCostUsd: number;
+  avgCost: number;
+  totalCost: number;
 };
 
 export type Dashboard = {
@@ -54,7 +58,9 @@ export type Dashboard = {
   avgOutRate: number | null;
   cashUsd: number;
   holdingsCostUsd: number;
+  holdingsCostThb: number;
   dividendGrossUsd: number;
   dividendNetUsd: number;
-  holdings: Holding[];
+  holdingsThai: Holding[];
+  holdingsForeign: Holding[];
 };

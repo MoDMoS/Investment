@@ -41,6 +41,7 @@ model Trade {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      DateTime
   ticker    String
+  market    String   @default("foreign")
   side      String
   shares    Float
   priceUsd  Float

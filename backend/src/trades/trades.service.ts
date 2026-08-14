@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { computeDashboard, tradeCostUsd } from '../dashboard/calc';
+import { computeDashboard, tradeCost, tradeCostUsd } from '../dashboard/calc';
 import { parseDateOnly, toDateOnly } from '../fx';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertTradeDto } from './dto/upsert-trade.dto';
@@ -44,6 +44,7 @@ export class TradesService {
       userId,
       date: parseDateOnly(dto.date),
       ticker: dto.ticker.trim().toUpperCase(),
+      market: dto.market === 'th' ? 'th' : 'foreign',
       side: dto.side,
       shares: dto.shares,
       priceUsd: dto.priceUsd,
@@ -53,7 +54,7 @@ export class TradesService {
   }
 
   private async willExceedCash(userId: string, dto: UpsertTradeDto) {
-    if (dto.side !== 'buy') return false;
+    if (dto.side !== 'buy' || dto.market === 'th') return false;
     const [transfers, trades, dividends] = await Promise.all([
       this.prisma.fxTransfer.findMany({ where: { userId } }),
       this.prisma.trade.findMany({ where: { userId } }),
@@ -64,6 +65,7 @@ export class TradesService {
       date: parseDateOnly(dto.date),
       createdAt: new Date(),
       ticker: dto.ticker,
+      market: 'foreign',
       side: dto.side,
       shares: dto.shares,
       priceUsd: dto.priceUsd,
@@ -84,25 +86,29 @@ function serializeTrade(row: {
   id: string;
   date: Date;
   ticker: string;
+  market: string;
   side: string;
   shares: number;
   priceUsd: number;
   feeUsd: number;
   note: string;
 }) {
+  const market = row.market === 'th' ? 'th' : 'foreign';
   return {
     id: row.id,
     date: toDateOnly(row.date),
     ticker: row.ticker,
+    market,
     side: row.side,
     shares: row.shares,
     priceUsd: row.priceUsd,
     feeUsd: row.feeUsd,
     note: row.note,
-    totalUsd: tradeCostUsd({
+    totalUsd: tradeCost({
       date: row.date,
       createdAt: row.date,
       ticker: row.ticker,
+      market,
       side: row.side,
       shares: row.shares,
       priceUsd: row.priceUsd,
