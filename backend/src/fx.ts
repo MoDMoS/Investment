@@ -1,5 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 
+export function roundMoney(value: number, digits = 4): number {
+  if (!Number.isFinite(value)) return 0;
+  const factor = 10 ** digits;
+  const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
+  return rounded === 0 ? 0 : rounded;
+}
+
 export function resolveFxAmounts(input: {
   thbAmount?: number;
   usdAmount?: number;
@@ -19,16 +26,32 @@ export function resolveFxAmounts(input: {
   }
 
   if (thb && usd && rate) {
-    return { thbAmount: thb, usdAmount: usd, rate };
+    return {
+      thbAmount: roundMoney(thb),
+      usdAmount: roundMoney(usd),
+      rate: roundMoney(rate),
+    };
   }
   if (thb && rate) {
-    return { thbAmount: thb, usdAmount: thb / rate, rate };
+    return {
+      thbAmount: roundMoney(thb),
+      usdAmount: roundMoney(thb / rate),
+      rate: roundMoney(rate),
+    };
   }
   if (thb && usd) {
-    return { thbAmount: thb, usdAmount: usd, rate: thb / usd };
+    return {
+      thbAmount: roundMoney(thb),
+      usdAmount: roundMoney(usd),
+      rate: roundMoney(thb / usd),
+    };
   }
   if (usd && rate) {
-    return { thbAmount: usd * rate, usdAmount: usd, rate };
+    return {
+      thbAmount: roundMoney(usd * rate),
+      usdAmount: roundMoney(usd),
+      rate: roundMoney(rate),
+    };
   }
 
   throw new BadRequestException(

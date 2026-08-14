@@ -182,6 +182,26 @@ describe('computeDashboard', () => {
     expect(summary.cashThb).toBe(2000);
     expect(summary.cashUsd).toBe(0);
   });
+
+  it('rounds FX and trade cash to 4 decimals so leftover float is zero', () => {
+    const usd = 35000 / 35.48;
+    const summary = computeDashboard(
+      [{ direction: 'out', thbAmount: 35000, usdAmount: usd }],
+      [
+        {
+          date: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          ticker: 'AAPL',
+          side: 'buy',
+          shares: 1,
+          priceUsd: Math.round(usd * 1e4) / 1e4,
+          feeUsd: 0,
+        },
+      ],
+    );
+
+    expect(summary.cashUsd).toBe(0);
+  });
 });
 
 describe('yahoo quotes helpers', () => {

@@ -1,3 +1,5 @@
+import { roundMoney } from '../fx';
+
 export type TransferRow = {
   direction: string;
   thbAmount: number;
@@ -90,7 +92,9 @@ export function isThaiMarket(market?: string) {
 
 export function tradeCost(trade: TradeRow): number {
   const notional = trade.shares * trade.priceUsd;
-  return trade.side === 'buy' ? notional + trade.feeUsd : notional - trade.feeUsd;
+  const amount =
+    trade.side === 'buy' ? notional + trade.feeUsd : notional - trade.feeUsd;
+  return roundMoney(amount);
 }
 
 export function tradeCostUsd(trade: TradeRow): number {
@@ -122,11 +126,13 @@ export function computePositions(trades: TradeRow[]): {
     const current = map.get(key) ?? { market, shares: 0, cost: 0 };
     if (trade.side === 'buy') {
       current.shares += trade.shares;
-      current.cost += trade.shares * trade.priceUsd + trade.feeUsd;
+      current.cost = roundMoney(
+        current.cost + trade.shares * trade.priceUsd + trade.feeUsd,
+      );
     } else {
       const avg = current.shares > 0 ? current.cost / current.shares : 0;
-      const proceeds = trade.shares * trade.priceUsd - trade.feeUsd;
-      const cost = avg * trade.shares;
+      const proceeds = roundMoney(trade.shares * trade.priceUsd - trade.feeUsd);
+      const cost = roundMoney(avg * trade.shares);
       realized.push({
         date: trade.date,
         ticker,
@@ -135,11 +141,11 @@ export function computePositions(trades: TradeRow[]): {
         avgCost: avg,
         sellPrice: trade.priceUsd,
         fee: trade.feeUsd,
-        pnl: proceeds - cost,
+        pnl: roundMoney(proceeds - cost),
       });
       current.shares -= trade.shares;
-      current.cost -= cost;
-      if (current.shares <= 1e-10) {
+      current.cost = roundMoney(current.cost - cost);
+      if (current.shares <= 1e-8) {
         current.shares = 0;
         current.cost = 0;
       }
@@ -153,8 +159,8 @@ export function computePositions(trades: TradeRow[]): {
       ticker: key.slice(key.indexOf(':') + 1),
       market: value.market,
       shares: value.shares,
-      avgCost: value.cost / value.shares,
-      totalCost: value.cost,
+      avgCost: roundMoney(value.cost / value.shares),
+      totalCost: roundMoney(value.cost),
       lastPrice: null,
       marketValue: null,
       pnl: null,
@@ -176,7 +182,7 @@ function cashFromEntries(entries: CashEntryRow[], kind: 'th' | 'foreign') {
     if (entry.kind !== kind) continue;
     cash += entry.direction === 'in' ? entry.amount : -entry.amount;
   }
-  return cash;
+  return roundMoney(cash);
 }
 
 function computeCash(
@@ -192,11 +198,11 @@ function computeCash(
 
   for (const transfer of transfers) {
     if (transfer.direction === 'out') {
-      thbOut += transfer.thbAmount;
-      usdOut += transfer.usdAmount;
+      thbOut = roundMoney(thbOut + transfer.thbAmount);
+      usdOut = roundMoney(usdOut + transfer.usdAmount);
     } else {
-      thbIn += transfer.thbAmount;
-      usdIn += transfer.usdAmount;
+      thbIn = roundMoney(thbIn + transfer.thbAmount);
+      usdIn = roundMoney(usdIn + transfer.usdAmount);
     }
   }
 
@@ -205,12 +211,16 @@ function computeCash(
   for (const trade of trades) {
     const usd = tradeCostUsd(trade);
     const thb = tradeCostThb(trade);
-    if (usd) tradeCashUsd += trade.side === 'buy' ? -usd : usd;
-    if (thb) tradeCashThb += trade.side === 'buy' ? -thb : thb;
+    if (usd) tradeCashUsd = roundMoney(tradeCashUsd + (trade.side === 'buy' ? -usd : usd));
+    if (thb) tradeCashThb = roundMoney(tradeCashThb + (trade.side === 'buy' ? -thb : thb));
   }
 
-  const dividendGrossUsd = dividends.reduce((sum, row) => sum + row.grossUsd, 0);
-  const dividendNetUsd = dividends.reduce((sum, row) => sum + row.netUsd, 0);
+  const dividendGrossUsd = roundMoney(
+    dividends.reduce((sum, row) => sum + row.grossUsd, 0),
+  );
+  const dividendNetUsd = roundMoney(
+    dividends.reduce((sum, row) => sum + row.netUsd, 0),
+  );
 
   return {
     thbOut,
@@ -221,9 +231,14 @@ function computeCash(
     tradeCashThb,
     dividendGrossUsd,
     dividendNetUsd,
-    cashUsd:
-      usdOut - usdIn + tradeCashUsd + dividendNetUsd + cashFromEntries(cashEntries, 'foreign'),
-    cashThb: cashFromEntries(cashEntries, 'th') + tradeCashThb,
+    cashUsd: roundMoney(
+      usdOut -
+        usdIn +
+        tradeCashUsd +
+        dividendNetUsd +
+        cashFromEntries(cashEntries, 'foreign'),
+    ),
+    cashThb: roundMoney(cashFromEntries(cashEntries, 'th') + tradeCashThb),
   };
 }
 
@@ -262,8 +277,12 @@ export function computeDashboard(
   const { holdings, realized } = computePositions(trades);
   const holdingsThai = holdings.filter((row) => row.market === 'th');
   const holdingsForeign = holdings.filter((row) => row.market === 'foreign');
-  const holdingsCostThb = holdingsThai.reduce((sum, row) => sum + row.totalCost, 0);
-  const holdingsCostUsd = holdingsForeign.reduce((sum, row) => sum + row.totalCost, 0);
+  const holdingsCostThb = roundMoney(
+    holdingsThai.reduce((sum, row) => sum + row.totalCost, 0),
+  );
+  const holdingsCostUsd = roundMoney(
+    holdingsForeign.reduce((sum, row) => sum + row.totalCost, 0),
+  );
   const realizedThai = realized.filter((row) => row.market === 'th');
   const realizedForeign = realized.filter((row) => row.market === 'foreign');
 
@@ -280,8 +299,8 @@ export function computeDashboard(
     marketValueThb: null,
     pnlUsd: null,
     pnlThb: null,
-    realizedPnlUsd: realizedForeign.reduce((sum, row) => sum + row.pnl, 0),
-    realizedPnlThb: realizedThai.reduce((sum, row) => sum + row.pnl, 0),
+    realizedPnlUsd: roundMoney(realizedForeign.reduce((sum, row) => sum + row.pnl, 0)),
+    realizedPnlThb: roundMoney(realizedThai.reduce((sum, row) => sum + row.pnl, 0)),
     realized,
     quotesAsOf: null,
     dividendGrossUsd: cash.dividendGrossUsd,
@@ -307,11 +326,11 @@ export function applyQuotes(
     const price =
       prices.get(yahooSymbol(row.ticker, row.market)) ?? prices.get(row.ticker.toUpperCase());
     if (price == null) return row;
-    const marketValue = row.shares * price;
-    const pnl = marketValue - row.totalCost;
+    const marketValue = roundMoney(row.shares * price);
+    const pnl = roundMoney(marketValue - row.totalCost);
     return {
       ...row,
-      lastPrice: price,
+      lastPrice: roundMoney(price),
       marketValue,
       pnl,
       pnlPct: row.totalCost > 0 ? pnl / row.totalCost : null,
@@ -325,7 +344,7 @@ export function quotedTotals(holdings: Holding[]) {
     return { marketValue: null as number | null, pnl: null as number | null };
   }
   return {
-    marketValue: priced.reduce((sum, row) => sum + (row.marketValue ?? 0), 0),
-    pnl: priced.reduce((sum, row) => sum + (row.pnl ?? 0), 0),
+    marketValue: roundMoney(priced.reduce((sum, row) => sum + (row.marketValue ?? 0), 0)),
+    pnl: roundMoney(priced.reduce((sum, row) => sum + (row.pnl ?? 0), 0)),
   };
 }
