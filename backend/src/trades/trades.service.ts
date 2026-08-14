@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
-import { computeDashboard, tradeCost, tradeCostThb, tradeCostUsd } from '../dashboard/calc';
+import { computeDashboard, tradeCost, tradeCostUsd } from '../dashboard/calc';
 import { parseDateOnly, toDateOnly } from '../fx';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertTradeDto } from './dto/upsert-trade.dto';
@@ -73,6 +73,7 @@ export class TradesService {
   ) {
     if (dto.side !== 'buy') return false;
     const market = dto.market === 'th' ? 'th' : 'foreign';
+    if (market === 'th') return false;
     const [transfers, trades, dividends, cashRows] = await Promise.all([
       this.prisma.fxTransfer.findMany({ where: { userId, accountId } }),
       this.prisma.trade.findMany({ where: { userId, accountId } }),
@@ -103,9 +104,6 @@ export class TradesService {
       priceUsd: dto.priceUsd,
       feeUsd: dto.feeUsd ?? 0,
     };
-    if (market === 'th') {
-      return tradeCostThb(tradeRow) > summary.cashThb + 1e-8;
-    }
     return tradeCostUsd(tradeRow) > summary.cashUsd + 1e-8;
   }
 

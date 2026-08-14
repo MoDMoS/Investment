@@ -36,6 +36,8 @@ export function AccountsPage() {
   const [editingCashId, setEditingCashId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const selectedCashAccount = accounts.find((row) => row.id === cashForm.accountId);
+  const thaiCash = accounts.find((row) => row.kind === 'th');
 
   async function load() {
     const [nextAccounts, nextEntries] = await Promise.all([
@@ -44,8 +46,9 @@ export function AccountsPage() {
     ]);
     setAccounts(nextAccounts);
     setEntries(nextEntries);
+    const thaiId = nextAccounts.find((row) => row.kind === 'th')?.id ?? '';
     setCashForm((prev) =>
-      prev.accountId ? prev : emptyCash(nextAccounts[0]?.id ?? ''),
+      prev.accountId ? prev : emptyCash(thaiId || nextAccounts[0]?.id || ''),
     );
   }
 
@@ -164,7 +167,7 @@ export function AccountsPage() {
             <HideMoneyButton />
           </div>
           <p className="text-sm text-stone-500">
-            แยกโบรกไทยกับโบรกนอก เงินเข้า–ออกโบรกไม่ใช่รายการแลกเงินข้ามประเทศ
+            แยกโบรกไทยกับโบรกนอก — เงินสดบาทเติมเองที่นี่ ไม่ถูกหักตอนซื้อหุ้นไทย
           </p>
         </div>
         <div className="flex gap-2">
@@ -178,6 +181,33 @@ export function AccountsPage() {
       </div>
 
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
+
+      {thaiCash ? (
+        <div className="card flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-stone-500">เงินสดบาท ({thaiCash.name})</p>
+            <p className="mt-1 text-xl font-semibold">{money.thb(thaiCash.cash)}</p>
+            <p className="mt-1 text-xs text-stone-400">
+              เติมด้วยแบบฟอร์มด้านล่าง — ไม่ถูกหักตอนซื้อหุ้นไทย
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() =>
+              setCashForm({
+                accountId: thaiCash.id,
+                date: todayIso(),
+                direction: 'in',
+                amount: '',
+                note: '',
+              })
+            }
+          >
+            เติมเงินสดบาท
+          </button>
+        </div>
+      ) : null}
 
       <section className="card overflow-x-auto">
         <table className="table">
@@ -265,9 +295,10 @@ export function AccountsPage() {
       </form>
 
       <div>
-        <h2 className="text-lg font-semibold">เงินเข้า–ออกโบรก</h2>
+        <h2 className="text-lg font-semibold">เติมเงินสดบาท / เงินโบรก</h2>
         <p className="text-sm text-stone-500">
-          โบรกไทยเป็นบาท โบรกนอกเป็น USD ไม่ใช่เงินนำกลับไทย
+          เลือกบัญชีหุ้นไทยแล้วกดเข้าโบรกเพื่อเพิ่มเงินสดบาท ซื้อขายหุ้นไทยไม่กระทบยอดนี้
+          บัญชีนอกใช้หน่วย USD
         </p>
       </div>
 
@@ -282,7 +313,7 @@ export function AccountsPage() {
           >
             {accounts.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.name}
+                {row.name} ({row.kind === 'th' ? 'บาท' : 'USD'})
               </option>
             ))}
           </select>
@@ -306,12 +337,19 @@ export function AccountsPage() {
             }
             className="input"
           >
-            <option value="in">เข้าโบรก</option>
-            <option value="out">ออกจากโบรก</option>
+            <option value="in">เติมเงินเข้าโบรก</option>
+            <option value="out">ถอนเงินออกโบรก</option>
           </select>
         </label>
         <label className="block">
-          <span className="label">จำนวน</span>
+          <span className="label">
+            จำนวน
+            {selectedCashAccount
+              ? selectedCashAccount.kind === 'th'
+                ? ' (บาท)'
+                : ' (USD)'
+              : ''}
+          </span>
           <input
             type="number"
             step="any"
@@ -328,11 +366,12 @@ export function AccountsPage() {
             value={cashForm.note}
             onChange={(e) => setCashForm((prev) => ({ ...prev, note: e.target.value }))}
             className="input"
+            placeholder="เช่น โอนจากบัญชีออมทรัพย์"
           />
         </label>
         <div className="flex items-end gap-2">
           <button type="submit" disabled={submitting} className="btn-primary">
-            {editingCashId ? 'บันทึกการแก้ไข' : 'เพิ่มรายการ'}
+            {editingCashId ? 'บันทึกการแก้ไข' : 'บันทึกเงินโบรก'}
           </button>
           {editingCashId ? (
             <button
@@ -340,7 +379,8 @@ export function AccountsPage() {
               className="btn-ghost"
               onClick={() => {
                 setEditingCashId(null);
-                setCashForm(emptyCash(accounts[0]?.id ?? ''));
+                const thaiId = accounts.find((row) => row.kind === 'th')?.id ?? '';
+                setCashForm(emptyCash(thaiId || accounts[0]?.id || ''));
               }}
             >
               ยกเลิก

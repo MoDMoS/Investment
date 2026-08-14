@@ -147,11 +147,7 @@ export function TradesPage() {
       return;
     }
     setSortKey(key);
-    setSortDir(
-      key === 'date' || key === 'totalUsd' || key === 'priceUsd' || key === 'feeUsd'
-        ? 'desc'
-        : 'asc',
-    );
+    setSortDir(key === 'date' || key === 'totalUsd' || key === 'priceUsd' ? 'desc' : 'asc');
   }
 
   return (
@@ -163,6 +159,7 @@ export function TradesPage() {
         </div>
         <p className="text-sm text-stone-500">
           แยกหุ้นไทย (ราคาเป็นบาท) กับหุ้นนอก (ราคาเป็น USD)
+          ซื้อขายหุ้นไทยไม่กระทบเงินสดบาท — เติมเงินสดบาทที่หน้าบัญชี
           ขายหุ้นนอกแล้วยังไม่นับเป็นเงินนำกลับ จนกว่าจะบันทึกแลกเงินเข้าไทย
         </p>
       </div>
@@ -405,13 +402,6 @@ export function TradesPage() {
                     onClick={() => toggleSort('priceUsd')}
                   />
                   <SortTh
-                    label="ค่าคอม"
-                    align="right"
-                    active={sortKey === 'feeUsd'}
-                    dir={sortDir}
-                    onClick={() => toggleSort('feeUsd')}
-                  />
-                  <SortTh
                     label="รวม"
                     align="right"
                     active={sortKey === 'totalUsd'}
@@ -435,9 +425,6 @@ export function TradesPage() {
                     <td className="text-right">{fmt.shares(row.shares)}</td>
                     <td className="text-right">
                       {row.market === 'th' ? money.thb(row.priceUsd) : money.usd(row.priceUsd)}
-                    </td>
-                    <td className="text-right">
-                      {row.market === 'th' ? money.thb(row.feeUsd) : money.usd(row.feeUsd)}
                     </td>
                     <td className="text-right">
                       {row.market === 'th' ? money.thb(row.totalUsd) : money.usd(row.totalUsd)}
@@ -470,18 +457,10 @@ function numOrZero(value: string) {
   return Number.isFinite(n) ? n : 0;
 }
 
-type SortKey =
-  | 'date'
-  | 'market'
-  | 'ticker'
-  | 'side'
-  | 'shares'
-  | 'priceUsd'
-  | 'feeUsd'
-  | 'totalUsd';
+type SortKey = 'date' | 'market' | 'ticker' | 'side' | 'shares' | 'priceUsd' | 'totalUsd';
 
 function compareTrades(a: Trade, b: Trade, key: SortKey) {
-  if (key === 'shares' || key === 'priceUsd' || key === 'feeUsd' || key === 'totalUsd') {
+  if (key === 'shares' || key === 'priceUsd' || key === 'totalUsd') {
     return a[key] - b[key];
   }
   return String(a[key]).localeCompare(String(b[key]), 'th');

@@ -140,7 +140,7 @@ describe('computeDashboard', () => {
     );
 
     expect(summary.cashUsd).toBe(1000);
-    expect(summary.cashThb).toBe(-3000);
+    expect(summary.cashThb).toBe(0);
     expect(summary.holdingsCostThb).toBe(3000);
     expect(summary.holdingsCostUsd).toBe(0);
     expect(summary.holdingsThai[0].ticker).toBe('PTT');
@@ -159,7 +159,7 @@ describe('computeDashboard', () => {
     expect(summary.cashUsd).toBe(1008.5);
   });
 
-  it('tracks Thai broker cash from deposits and trades', () => {
+  it('tracks Thai broker cash from deposits only, not Thai trades', () => {
     const summary = computeDashboard(
       [],
       [
@@ -179,11 +179,11 @@ describe('computeDashboard', () => {
       [{ accountId: 'thai', direction: 'in', amount: 5000, kind: 'th' }],
     );
 
-    expect(summary.cashThb).toBe(2000);
+    expect(summary.cashThb).toBe(5000);
     expect(summary.cashUsd).toBe(0);
   });
 
-  it('rounds FX and trade cash to 4 decimals so leftover float is zero', () => {
+  it('rounds FX and trade cash so leftover float is zero', () => {
     const usd = 35000 / 35.48;
     const summary = computeDashboard(
       [{ direction: 'out', thbAmount: 35000, usdAmount: usd }],

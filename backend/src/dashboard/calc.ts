@@ -102,9 +102,9 @@ export function tradeCostUsd(trade: TradeRow): number {
   return tradeCost(trade);
 }
 
-export function tradeCostThb(trade: TradeRow): number {
-  if (!isThaiMarket(trade.market)) return 0;
-  return tradeCost(trade);
+export function tradeCostThb(_trade: TradeRow): number {
+  // ซื้อขายหุ้นไทยไม่กระทบเงินสดบาท — เงินสดบาทมาจากเงินเข้า–ออกโบรกเท่านั้น
+  return 0;
 }
 
 export function computePositions(trades: TradeRow[]): {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccounts } from '../accounts';
 import { api } from '../api';
@@ -74,7 +74,15 @@ export function DashboardPage() {
         <Card label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
         <Card label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
         <Card label="เงินสด USD" value={money.usd(data.cashUsd)} />
-        <Card label="เงินสดบาท (โบรกไทย)" value={money.thb(data.cashThb)} hint="เงินเข้าโบรก − ซื้อหุ้นไทย" />
+        <Card
+          label="เงินสดบาท (โบรกไทย)"
+          value={money.thb(data.cashThb)}
+          hint={
+            <Link to="/accounts" className="text-emerald-800 hover:underline">
+              เติมเงินที่หน้าบัญชี
+            </Link>
+          }
+        />
         <Card
           label="มูลค่าหุ้นนอก"
           value={data.marketValueUsd != null ? money.usd(data.marketValueUsd) : '—'}
@@ -212,6 +220,7 @@ function HoldingsCard({
               <tr>
                 <th>หุ้น</th>
                 <th className="text-right">จำนวน</th>
+                <th className="text-right">ต้นทุน</th>
                 <th className="text-right">ราคา</th>
                 <th className="text-right">มูลค่า</th>
                 <th className="text-right">P/L</th>
@@ -222,6 +231,7 @@ function HoldingsCard({
                 <tr key={`${row.market}-${row.ticker}`}>
                   <td className="font-medium">{row.ticker}</td>
                   <td className="text-right">{fmt.shares(row.shares)}</td>
+                  <td className="text-right">{money(row.avgCost)}</td>
                   <td className="text-right">
                     {row.lastPrice != null ? money(row.lastPrice) : '—'}
                   </td>
@@ -255,7 +265,7 @@ function Card({
 }: {
   label: string;
   value: string;
-  hint?: string;
+  hint?: ReactNode;
   tone?: 'up' | 'down' | 'flat';
 }) {
   const color =
