@@ -114,7 +114,10 @@ export function computePositions(trades: TradeRow[]): {
   holdings: Holding[];
   realized: RealizedLot[];
 } {
-  const map = new Map<string, { market: 'th' | 'foreign'; shares: number; cost: number }>();
+  const map = new Map<
+    string,
+    { market: 'th' | 'foreign'; shares: number; cost: number }
+  >();
   const realized: RealizedLot[] = [];
   const sorted = [...trades].sort((a, b) => {
     const byDate = a.date.getTime() - b.date.getTime();
@@ -123,7 +126,9 @@ export function computePositions(trades: TradeRow[]): {
   });
 
   for (const trade of sorted) {
-    const market: 'th' | 'foreign' = isThaiMarket(trade.market) ? 'th' : 'foreign';
+    const market: 'th' | 'foreign' = isThaiMarket(trade.market)
+      ? 'th'
+      : 'foreign';
     const ticker = trade.ticker.toUpperCase();
     const key = `${market}:${ticker}`;
     const current = map.get(key) ?? { market, shares: 0, cost: 0 };
@@ -214,8 +219,14 @@ function computeCash(
   for (const trade of trades) {
     const usd = tradeCostUsd(trade);
     const thb = tradeCostThb(trade);
-    if (usd) tradeCashUsd = roundMoney(tradeCashUsd + (trade.side === 'buy' ? -usd : usd));
-    if (thb) tradeCashThb = roundMoney(tradeCashThb + (trade.side === 'buy' ? -thb : thb));
+    if (usd)
+      tradeCashUsd = roundMoney(
+        tradeCashUsd + (trade.side === 'buy' ? -usd : usd),
+      );
+    if (thb)
+      tradeCashThb = roundMoney(
+        tradeCashThb + (trade.side === 'buy' ? -thb : thb),
+      );
   }
 
   const foreignDividends = dividends.filter((row) => !isThaiMarket(row.market));
@@ -314,8 +325,12 @@ export function computeDashboard(
     marketValueThb: null,
     pnlUsd: null,
     pnlThb: null,
-    realizedPnlUsd: roundMoney(realizedForeign.reduce((sum, row) => sum + row.pnl, 0)),
-    realizedPnlThb: roundMoney(realizedThai.reduce((sum, row) => sum + row.pnl, 0)),
+    realizedPnlUsd: roundMoney(
+      realizedForeign.reduce((sum, row) => sum + row.pnl, 0),
+    ),
+    realizedPnlThb: roundMoney(
+      realizedThai.reduce((sum, row) => sum + row.pnl, 0),
+    ),
     realized,
     quotesAsOf: null,
     dividendGrossUsd: cash.dividendGrossUsd,
@@ -324,7 +339,13 @@ export function computeDashboard(
     dividendNetThb: cash.dividendNetThb,
     holdingsThai,
     holdingsForeign,
-    accountCash: computeAccountCash(accounts, transfers, trades, dividends, cashEntries),
+    accountCash: computeAccountCash(
+      accounts,
+      transfers,
+      trades,
+      dividends,
+      cashEntries,
+    ),
   };
 }
 
@@ -341,7 +362,8 @@ export function applyQuotes(
 ): Holding[] {
   return holdings.map((row) => {
     const price =
-      prices.get(yahooSymbol(row.ticker, row.market)) ?? prices.get(row.ticker.toUpperCase());
+      prices.get(yahooSymbol(row.ticker, row.market)) ??
+      prices.get(row.ticker.toUpperCase());
     if (price == null) return row;
     const marketValue = roundMoney(row.shares * price);
     const pnl = roundMoney(marketValue - row.totalCost);
@@ -356,12 +378,16 @@ export function applyQuotes(
 }
 
 export function quotedTotals(holdings: Holding[]) {
-  const priced = holdings.filter((row) => row.marketValue != null && row.pnl != null);
+  const priced = holdings.filter(
+    (row) => row.marketValue != null && row.pnl != null,
+  );
   if (priced.length === 0) {
     return { marketValue: null as number | null, pnl: null as number | null };
   }
   return {
-    marketValue: roundMoney(priced.reduce((sum, row) => sum + (row.marketValue ?? 0), 0)),
+    marketValue: roundMoney(
+      priced.reduce((sum, row) => sum + (row.marketValue ?? 0), 0),
+    ),
     pnl: roundMoney(priced.reduce((sum, row) => sum + (row.pnl ?? 0), 0)),
   };
 }

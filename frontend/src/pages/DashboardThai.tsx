@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccounts } from '../accounts';
 import { api } from '../api';
 import { DonutChart } from '../components/DonutChart';
 import { HideMoneyButton } from '../components/HideMoneyButton';
@@ -11,9 +10,6 @@ import type { Dashboard, Holding } from '../types';
 export function DashboardThaiPage() {
   const money = useMoneyFmt();
   const { hidden } = usePrivacy();
-  const { accounts } = useAccounts();
-  const thaiAccounts = accounts.filter((row) => row.kind === 'th');
-  const [accountId, setAccountId] = useState('');
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
 
@@ -22,10 +18,7 @@ export function DashboardThaiPage() {
 
     async function load() {
       try {
-        const path = accountId
-          ? `/dashboard?accountId=${encodeURIComponent(accountId)}`
-          : '/dashboard';
-        const next = await api.get<Dashboard>(path);
+        const next = await api.get<Dashboard>('/dashboard');
         if (!cancelled) {
           setData(next);
           setError('');
@@ -41,7 +34,7 @@ export function DashboardThaiPage() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [accountId]);
+  }, []);
 
   if (error && !data) return <p className="text-red-700">{error}</p>;
   if (!data) return <p className="text-stone-500">กำลังโหลด...</p>;
@@ -53,31 +46,14 @@ export function DashboardThaiPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมหุ้นไทย</h1>
-            <HideMoneyButton />
-          </div>
-          <p className="mt-1 text-sm text-stone-500">
-            เงินสดบาทในโบรก และพอร์ตหุ้นไทย — ซื้อขายไม่หักเงินสดบาทอัตโนมัติ
-          </p>
+      <div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-stone-900">ภาพรวมหุ้นไทย</h1>
+          <HideMoneyButton />
         </div>
-        <label className="block min-w-48">
-          <span className="label">บัญชี</span>
-          <select
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="input"
-          >
-            <option value="">ทั้งหมด</option>
-            {thaiAccounts.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="mt-1 text-sm text-stone-500">
+          เงินสดบาทในโบรก และพอร์ตหุ้นไทย — ซื้อขายไม่หักเงินสดบาทอัตโนมัติ
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
