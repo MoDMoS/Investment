@@ -147,7 +147,11 @@ export function TradesPage() {
       return;
     }
     setSortKey(key);
-    setSortDir(key === 'date' || key === 'totalUsd' || key === 'priceUsd' ? 'desc' : 'asc');
+    setSortDir(
+      key === 'date' || key === 'totalUsd' || key === 'priceUsd' || key === 'feeUsd'
+        ? 'desc'
+        : 'asc',
+    );
   }
 
   return (
@@ -401,6 +405,13 @@ export function TradesPage() {
                     onClick={() => toggleSort('priceUsd')}
                   />
                   <SortTh
+                    label="ค่าคอม"
+                    align="right"
+                    active={sortKey === 'feeUsd'}
+                    dir={sortDir}
+                    onClick={() => toggleSort('feeUsd')}
+                  />
+                  <SortTh
                     label="รวม"
                     align="right"
                     active={sortKey === 'totalUsd'}
@@ -424,6 +435,9 @@ export function TradesPage() {
                     <td className="text-right">{fmt.shares(row.shares)}</td>
                     <td className="text-right">
                       {row.market === 'th' ? money.thb(row.priceUsd) : money.usd(row.priceUsd)}
+                    </td>
+                    <td className="text-right">
+                      {row.market === 'th' ? money.thb(row.feeUsd) : money.usd(row.feeUsd)}
                     </td>
                     <td className="text-right">
                       {row.market === 'th' ? money.thb(row.totalUsd) : money.usd(row.totalUsd)}
@@ -456,10 +470,18 @@ function numOrZero(value: string) {
   return Number.isFinite(n) ? n : 0;
 }
 
-type SortKey = 'date' | 'market' | 'ticker' | 'side' | 'shares' | 'priceUsd' | 'totalUsd';
+type SortKey =
+  | 'date'
+  | 'market'
+  | 'ticker'
+  | 'side'
+  | 'shares'
+  | 'priceUsd'
+  | 'feeUsd'
+  | 'totalUsd';
 
 function compareTrades(a: Trade, b: Trade, key: SortKey) {
-  if (key === 'shares' || key === 'priceUsd' || key === 'totalUsd') {
+  if (key === 'shares' || key === 'priceUsd' || key === 'feeUsd' || key === 'totalUsd') {
     return a[key] - b[key];
   }
   return String(a[key]).localeCompare(String(b[key]), 'th');
