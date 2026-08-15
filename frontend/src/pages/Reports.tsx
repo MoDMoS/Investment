@@ -176,7 +176,7 @@ function Card({
   tone?: 'up' | 'down' | 'flat';
 }) {
   const color =
-    tone === 'up' ? 'text-emerald-800' : tone === 'down' ? 'text-red-700' : 'text-stone-900';
+    tone === 'up' ? 'text-green-400' : tone === 'down' ? 'text-red-400' : 'text-stone-900';
   return (
     <div className="card">
       <p className="text-sm text-stone-500">{label}</p>

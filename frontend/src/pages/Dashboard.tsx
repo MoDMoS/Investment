@@ -317,7 +317,7 @@ function OverviewCard({
   tone?: 'up' | 'down' | 'flat';
 }) {
   const color =
-    tone === 'up' ? 'text-emerald-800' : tone === 'down' ? 'text-red-700' : 'text-stone-900';
+    tone === 'up' ? 'text-green-400' : tone === 'down' ? 'text-red-400' : 'text-stone-900';
   return (
     <div className="card">
       <p className="text-sm text-stone-500">{label}</p>
@@ -334,5 +334,5 @@ function overviewTone(value: number | null): 'up' | 'down' | 'flat' {
 
 function overviewPnlClass(value: number | null) {
   if (value == null || value === 0) return 'text-stone-700';
-  return value > 0 ? 'text-emerald-800' : 'text-red-700';
+  return value > 0 ? 'text-green-400' : 'text-red-400';
 }

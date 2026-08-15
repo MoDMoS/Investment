@@ -189,13 +189,13 @@ body {
 }
 
 .table tr.trade-buy td {
-  background: rgba(96, 165, 250, 0.12);
-  color: #93c5fd;
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
 }
 
 .table tr.trade-sell td {
-  background: rgba(232, 106, 106, 0.12);
-  color: #f07178;
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
 }
 
 .font-brand {
