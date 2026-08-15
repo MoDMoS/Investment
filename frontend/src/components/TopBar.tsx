@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 export function TopBar({
@@ -27,16 +27,18 @@ export function TopBar({
   const initial = (user?.name?.trim()?.charAt(0) || '?').toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-100/80 backdrop-blur-md">
       <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <img
             src={`${import.meta.env.BASE_URL}favicon.png`}
             alt=""
-            className="h-8 w-8 shrink-0 rounded-lg"
+            className="h-8 w-8 shrink-0 rounded-lg shadow-md"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-stone-900">{title}</p>
+            <p className="font-brand truncate text-sm font-bold tracking-tight text-stone-900">
+              {title}
+            </p>
             <p className="truncate text-xs text-stone-500">
               {subtitle ?? user?.name}
             </p>
@@ -48,12 +50,12 @@ export function TopBar({
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-stone-100"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-stone-50"
               aria-expanded={menuOpen}
               aria-haspopup="menu"
               title="โปรไฟล์"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-800 text-sm font-semibold text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-800 text-sm font-bold text-white">
                 {initial}
               </span>
               <span className="hidden max-w-32 truncate text-sm text-stone-700 sm:inline">
@@ -64,9 +66,9 @@ export function TopBar({
             {menuOpen ? (
               <div
                 role="menu"
-                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 py-1 shadow-xl"
               >
-                <div className="border-b border-stone-100 px-3 py-2">
+                <div className="border-b border-stone-200 px-3 py-2">
                   <p className="truncate text-sm font-medium text-stone-900">
                     {user?.name}
                   </p>
@@ -98,14 +100,14 @@ export function TopBar({
             ) : null}
           </div>
 
-          <Link
-            to="/"
-            className="rounded-lg p-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-            title="บริการทั้งหมด"
-            aria-label="บริการทั้งหมด"
+          <a
+            href="/"
+            className="rounded-lg p-2 text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+            title="กลับไป Portal"
+            aria-label="กลับไป Portal"
           >
             <AppsIcon />
-          </Link>
+          </a>
         </div>
       </div>
     </header>

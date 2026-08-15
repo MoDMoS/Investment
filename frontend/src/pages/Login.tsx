@@ -84,12 +84,24 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold tracking-[0.2em] text-emerald-800">
-          INVESTMENT LEDGER
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-stone-900">{title}</h1>
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="card w-full max-w-md p-8">
+        <div className="mb-5 flex items-center gap-3">
+          <img
+            src={`${import.meta.env.BASE_URL}favicon.png`}
+            alt=""
+            className="h-11 w-11 rounded-xl shadow-md"
+          />
+          <div>
+            <p className="font-brand text-xs font-bold tracking-[0.18em] text-emerald-800">
+              MoDMoS
+            </p>
+            <p className="text-xs text-stone-500">Investment Ledger</p>
+          </div>
+        </div>
+        <h1 className="font-brand text-2xl font-bold tracking-tight text-stone-900">
+          {title}
+        </h1>
         <p className="mt-1 mb-6 text-sm text-stone-500">{subtitle}</p>
         {children}
       </div>

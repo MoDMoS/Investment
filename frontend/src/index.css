@@ -1,19 +1,81 @@
 @import "tailwindcss";
 
+/* MoDMoS dark theme — aligned with Portal / Gold Agent */
+@theme {
+  --font-sans: "IBM Plex Sans Thai", "Noto Sans Thai", "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  --color-white: #122a25;
+  --color-black: #e8f2ec;
+
+  --color-stone-50: #0a1c18;
+  --color-stone-100: #0f2420;
+  --color-stone-200: #1a3a32;
+  --color-stone-300: #254840;
+  --color-stone-400: #6b8a7e;
+  --color-stone-500: #8aa399;
+  --color-stone-600: #a3b7ad;
+  --color-stone-700: #c5d4cc;
+  --color-stone-800: #dce8e2;
+  --color-stone-900: #e8f2ec;
+  --color-stone-950: #f3faf6;
+
+  --color-emerald-50: rgba(200, 245, 74, 0.1);
+  --color-emerald-100: rgba(200, 245, 74, 0.16);
+  --color-emerald-200: rgba(200, 245, 74, 0.28);
+  --color-emerald-300: #9fcf3a;
+  --color-emerald-400: #b4e645;
+  --color-emerald-500: #c8f54a;
+  --color-emerald-600: #c8f54a;
+  --color-emerald-700: #b8e63c;
+  --color-emerald-800: #c8f54a;
+  --color-emerald-900: #d4f86a;
+  --color-emerald-950: #e8ffb0;
+
+  --color-red-50: rgba(232, 106, 106, 0.12);
+  --color-red-100: rgba(232, 106, 106, 0.18);
+  --color-red-200: rgba(232, 106, 106, 0.3);
+  --color-red-600: #e86a6a;
+  --color-red-700: #f07178;
+  --color-red-800: #ff8a90;
+
+  --color-amber-50: rgba(212, 162, 76, 0.12);
+  --color-amber-800: #e0b35c;
+}
+
 :root {
-  color-scheme: light;
-  font-family:
-    "IBM Plex Sans Thai",
-    "Noto Sans Thai",
-    "Segoe UI",
-    sans-serif;
+  color-scheme: dark;
+  --ink: #071411;
+  --panel: #122a25;
+  --panel-border: rgba(200, 245, 74, 0.16);
+  --text: #e8f2ec;
+  --muted: #8aa399;
+  --accent: #c8f54a;
+  --font-brand: "Syne", sans-serif;
+  --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Outfit", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f4f1ea;
-  color: #1f2933;
+  font-family: var(--font-body);
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 55% 45% at 12% -5%, rgba(56, 189, 140, 0.2), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 92% 0%, rgba(200, 245, 74, 0.08), transparent 55%),
+    linear-gradient(180deg, #0d2a24 0%, var(--ink) 55%, #050f0d 100%);
+  background-attachment: fixed;
 }
 
 #root {
@@ -23,54 +85,70 @@ body {
 .input {
   width: 100%;
   border-radius: 0.75rem;
-  border: 1px solid #e7e5e4;
-  background: #fff;
+  border: 1px solid var(--panel-border);
+  background: #0a1c18;
+  color: var(--text);
   padding: 0.6rem 0.8rem;
   font-size: 0.95rem;
   outline: none;
 }
 
 .input:focus {
-  border-color: #047857;
-  box-shadow: 0 0 0 3px rgb(4 120 87 / 12%);
+  border-color: rgba(200, 245, 74, 0.55);
+  box-shadow: 0 0 0 3px rgba(200, 245, 74, 0.14);
+}
+
+.input:disabled {
+  opacity: 0.65;
 }
 
 .label {
   display: block;
   margin-bottom: 0.3rem;
   font-size: 0.875rem;
-  color: #57534e;
+  color: var(--muted);
 }
 
 .btn-primary {
   border: 0;
   border-radius: 0.75rem;
-  background: #065f46;
-  color: #fff;
+  background: linear-gradient(135deg, #c8f54a, #9fcf3a);
+  color: #071411;
   padding: 0.65rem 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .btn-ghost {
   border: 0;
   background: transparent;
-  color: #57534e;
+  color: var(--muted);
   padding: 0.65rem 0.8rem;
   cursor: pointer;
 }
 
+.btn-ghost:hover {
+  color: var(--text);
+}
+
 .card {
-  border: 1px solid #e7e5e4;
-  background: #fff;
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(160deg, rgba(18, 42, 37, 0.96), rgba(10, 28, 24, 0.92));
   border-radius: 1rem;
   padding: 1.25rem;
-  box-shadow: 0 1px 2px rgb(28 25 23 / 4%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
 }
 
 .table {
@@ -83,11 +161,11 @@ body {
 .table td {
   padding: 0.7rem 0.5rem;
   text-align: left;
-  border-bottom: 1px solid #f5f5f4;
+  border-bottom: 1px solid rgba(232, 242, 236, 0.08);
 }
 
 .table th {
-  color: #78716c;
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -107,15 +185,19 @@ body {
 }
 
 .table th.sortable:hover {
-  color: #065f46;
+  color: var(--accent);
 }
 
 .table tr.trade-buy td {
-  background: #ecfdf5;
-  color: #14532d;
+  background: rgba(200, 245, 74, 0.1);
+  color: #d4f86a;
 }
 
 .table tr.trade-sell td {
-  background: #fef2f2;
-  color: #9f1239;
+  background: rgba(232, 106, 106, 0.12);
+  color: #f07178;
+}
+
+.font-brand {
+  font-family: var(--font-brand);
 }

@@ -5,9 +5,7 @@ type Service = {
   id: string;
   name: string;
   description: string;
-  /** Internal React Router path */
   to?: string;
-  /** External absolute URL (opens in same tab) */
   href?: string;
   available: boolean;
 };
@@ -34,10 +32,12 @@ const services: Service[] = [
 function ServiceCard({ service }: { service: Service }) {
   const body = (
     <>
-      <p className="text-lg font-semibold text-stone-900">{service.name}</p>
+      <p className="font-brand text-lg font-bold tracking-tight text-stone-900">
+        {service.name}
+      </p>
       <p className="mt-2 text-sm text-stone-500">{service.description}</p>
       {service.available ? (
-        <p className="mt-4 text-sm font-medium text-emerald-800">เข้าใช้งาน →</p>
+        <p className="mt-4 text-sm font-semibold text-emerald-800">เข้าใช้งาน →</p>
       ) : (
         <p className="mt-4 text-sm text-stone-400">เร็วๆ นี้</p>
       )}
@@ -45,7 +45,7 @@ function ServiceCard({ service }: { service: Service }) {
   );
 
   const cardClass =
-    'card block h-full transition hover:border-emerald-700/40 hover:shadow-md';
+    'card block h-full transition hover:border-emerald-700/50 hover:-translate-y-0.5';
 
   if (service.available && service.to) {
     return (
@@ -63,21 +63,30 @@ function ServiceCard({ service }: { service: Service }) {
     );
   }
 
-  return <div className="card h-full opacity-60">{body}</div>;
+  return <div className={`${cardClass} opacity-55`}>{body}</div>;
 }
 
 export function HomePage() {
   return (
     <div className="min-h-screen">
-      <TopBar title="Personal Tools" />
+      <TopBar title="MoDMoS" subtitle="เลือกบริการ" />
 
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
-          เลือกบริการ
-        </h1>
-        <p className="mt-2 text-stone-500">
-          เลือกโปรเจกต์ที่ต้องการใช้งาน — จะเพิ่มบริการอื่นในภายหลัง
-        </p>
+        <div className="mb-2 flex items-center gap-3">
+          <img
+            src={`${import.meta.env.BASE_URL}favicon.png`}
+            alt=""
+            className="h-12 w-12 rounded-xl shadow-lg"
+          />
+          <div>
+            <h1 className="font-brand text-3xl font-bold tracking-tight text-stone-900">
+              เลือกบริการ
+            </h1>
+            <p className="mt-1 text-stone-500">
+              โปรเจกต์ในเครือ MoDMoS — เพิ่มบริการอื่นได้ภายหลัง
+            </p>
+          </div>
+        </div>
 
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
           {services.map((service) => (

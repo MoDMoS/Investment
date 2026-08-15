@@ -41,12 +41,12 @@ export function LineChart({
           y1={height - pad}
           x2={width - pad}
           y2={height - pad}
-          stroke="#e7e5e4"
+          stroke="#1a3a32"
         />
-        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="#e7e5e4" />
-        <path d={path} fill="none" stroke="#065f46" strokeWidth="2.5" />
+        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="#1a3a32" />
+        <path d={path} fill="none" stroke="#c8f54a" strokeWidth="2.5" />
         {coords.map((row) => (
-          <circle key={row.label} cx={row.x} cy={row.y} r="3.5" fill="#065f46">
+          <circle key={row.label} cx={row.x} cy={row.y} r="3.5" fill="#c8f54a">
             <title>
               {row.label}: {format(row.value)}
             </title>

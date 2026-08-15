@@ -37,8 +37,8 @@ const linkClass = (open: boolean) =>
       open ? 'px-3 py-2' : 'justify-center px-2 py-2.5'
     } ${
       isActive
-        ? 'bg-emerald-800 text-white'
-        : 'text-stone-600 hover:bg-stone-200/70'
+        ? 'bg-emerald-800 font-semibold text-white shadow-sm'
+        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
     }`;
 
 export function Layout() {
@@ -58,12 +58,12 @@ export function Layout() {
 
       <div className="flex min-h-0 flex-1">
         <aside
-          className={`sticky top-14 flex h-[calc(100vh-3.5rem)] shrink-0 flex-col border-r border-stone-200 bg-white/90 backdrop-blur transition-[width] duration-200 ${
+          className={`sticky top-14 flex h-[calc(100vh-3.5rem)] shrink-0 flex-col border-r border-stone-200/80 bg-stone-100/70 backdrop-blur-md transition-[width] duration-200 ${
             open ? 'w-56' : 'w-16'
           }`}
         >
           <div
-            className={`flex items-center border-b border-stone-200 px-2 py-2 ${
+            className={`flex items-center border-b border-stone-200/80 px-2 py-2 ${
               open ? 'justify-between' : 'justify-center'
             }`}
           >
@@ -75,7 +75,7 @@ export function Layout() {
             <button
               type="button"
               onClick={() => setOpen((prev) => !prev)}
-              className="rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+              className="rounded-lg p-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900"
               aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
               title={open ? 'ปิดเมนู' : 'เปิดเมนู'}
             >
