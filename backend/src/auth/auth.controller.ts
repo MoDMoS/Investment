@@ -7,7 +7,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 const COOKIE = 'access_token';
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function sessionMaxAgeMs() {
+  const hours = Number(process.env.SESSION_MAX_AGE_HOURS);
+  if (Number.isFinite(hours) && hours > 0) {
+    return hours * 60 * 60 * 1000;
+  }
+  return 12 * 60 * 60 * 1000;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -50,7 +57,7 @@ export class AuthController {
   private setCookie(res: Response, token: string) {
     res.cookie(COOKIE, token, {
       ...cookieOptions(),
-      maxAge: WEEK_MS,
+      maxAge: sessionMaxAgeMs(),
     });
   }
 }

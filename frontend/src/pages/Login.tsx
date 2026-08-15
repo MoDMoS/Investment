@@ -1,7 +1,7 @@
-import { FormEvent, useState, type ReactNode } from 'react';
+import { FormEvent, useEffect, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { useAuth } from '../auth';
+import { takeAuthNotice, useAuth } from '../auth';
 import { apiError } from '../format';
 import type { User } from '../types';
 
@@ -11,13 +11,20 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const message = takeAuthNotice();
+    if (message) setNotice(message);
+  }, []);
 
   if (!loading && user) return <Navigate to="/" replace />;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
+    setNotice('');
     setSubmitting(true);
     try {
       const next = await api.post<User>('/auth/login', { email, password });
@@ -51,6 +58,7 @@ export function LoginPage() {
             className="input"
           />
         </Field>
+        {notice ? <p className="text-sm text-amber-800">{notice}</p> : null}
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
         <button type="submit" disabled={submitting} className="btn-primary w-full">
           {submitting ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}

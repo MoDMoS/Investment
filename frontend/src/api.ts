@@ -15,6 +15,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   };
 
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !path.startsWith('/auth/login') &&
+      !path.startsWith('/auth/register')
+    ) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     const message = Array.isArray(data.message)
       ? data.message.join(', ')
       : data.message || (response.status === 401 ? 'กรุณาเข้าสู่ระบบ' : 'เกิดข้อผิดพลาด');
