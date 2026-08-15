@@ -5,18 +5,18 @@ type Slice = {
   value: number;
 };
 
-/** Green tones for Investment donut (avoid blues) */
+/** High-contrast slice colors (easy to tell apart) */
 const COLORS = [
-  '#34d399',
-  '#10b981',
-  '#059669',
-  '#6ee7b7',
-  '#a3e635',
-  '#84cc16',
-  '#4ade80',
-  '#22c55e',
-  '#86efac',
-  '#bef264',
+  '#22c55e', // green
+  '#eab308', // yellow
+  '#f97316', // orange
+  '#ef4444', // red
+  '#a855f7', // purple
+  '#14b8a6', // teal
+  '#84cc16', // lime
+  '#ec4899', // pink
+  '#65a30d', // olive
+  '#f59e0b', // amber
 ];
 
 type Tip = {

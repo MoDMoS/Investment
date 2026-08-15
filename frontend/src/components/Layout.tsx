@@ -53,53 +53,52 @@ export function Layout() {
   }, [open]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <TopBar title="บันทึกการลงทุน" subtitle="Service by MoDMoS" />
-
-      <div className="flex min-h-0 flex-1">
-        <aside
-          className={`sticky top-16 flex h-[calc(100vh-4rem)] shrink-0 flex-col border-r border-stone-200/80 bg-stone-100/70 backdrop-blur-md transition-[width] duration-200 ${
-            open ? 'w-56' : 'w-16'
+    <div className="flex min-h-screen">
+      <aside
+        className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-stone-200/80 bg-stone-100/80 backdrop-blur-md transition-[width] duration-200 ${
+          open ? 'w-56' : 'w-16'
+        }`}
+      >
+        <div
+          className={`flex h-16 shrink-0 items-center border-b border-stone-200/80 px-2 ${
+            open ? 'justify-between gap-2' : 'justify-center'
           }`}
         >
-          <div
-            className={`flex items-center border-b border-stone-200/80 px-2 py-2 ${
-              open ? 'justify-between' : 'justify-center'
-            }`}
+          {open ? (
+            <p className="truncate px-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+              เมนู
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            className="rounded-lg p-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900"
+            aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
+            title={open ? 'ปิดเมนู' : 'เปิดเมนู'}
           >
-            {open ? (
-              <p className="px-2 text-xs font-medium uppercase tracking-wide text-stone-400">
-                เมนู
-              </p>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setOpen((prev) => !prev)}
-              className="rounded-lg p-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900"
-              aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
-              title={open ? 'ปิดเมนู' : 'เปิดเมนู'}
+            {open ? <CollapseIcon /> : <MenuIcon />}
+          </button>
+        </div>
+
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={linkClass(open)}
+              title={item.label}
             >
-              {open ? <CollapseIcon /> : <MenuIcon />}
-            </button>
-          </div>
+              <span className="shrink-0">{item.icon}</span>
+              {open ? <span className="truncate">{item.label}</span> : null}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
 
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={linkClass(open)}
-                title={item.label}
-              >
-                <span className="shrink-0">{item.icon}</span>
-                {open ? <span className="truncate">{item.label}</span> : null}
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
-
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-6">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar title="บันทึกการลงทุน" subtitle="by MoDMoS" />
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 lg:px-6">
           <div className="mx-auto max-w-6xl">
             <Outlet />
           </div>
