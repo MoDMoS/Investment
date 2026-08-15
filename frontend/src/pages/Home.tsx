@@ -26,11 +26,14 @@ export function HomePage() {
     <div className="min-h-screen">
       <header className="border-b border-stone-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold tracking-wide text-emerald-900">
-              Personal Tools
-            </p>
-            <p className="text-xs text-stone-500">{user?.name}</p>
+          <div className="flex items-center gap-2">
+            <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
+            <div>
+              <p className="text-sm font-semibold tracking-wide text-emerald-900">
+                Personal Tools
+              </p>
+              <p className="text-xs text-stone-500">{user?.name}</p>
+            </div>
           </div>
           <button
             type="button"

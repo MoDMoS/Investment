@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 const STORAGE_KEY = 'investment-nav-open';
@@ -54,76 +54,93 @@ export function Layout() {
   }, [open]);
 
   return (
-    <div className="flex min-h-screen">
-      <aside
-        className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-stone-200 bg-white/90 backdrop-blur transition-[width] duration-200 ${
-          open ? 'w-56' : 'w-16'
-        }`}
-      >
-        <div
-          className={`flex items-center gap-2 border-b border-stone-200 px-2 py-3 ${
-            open ? 'justify-between' : 'justify-center'
-          }`}
-        >
-          {open ? (
-            <div className="min-w-0 px-1">
-              <NavLink
-                to="/"
-                className="block truncate text-sm font-semibold tracking-wide text-emerald-900 hover:underline"
-              >
-                ← บริการทั้งหมด
-              </NavLink>
-              <p className="truncate text-xs text-stone-500">
-                บันทึกการลงทุน · {user?.name}
-              </p>
-            </div>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            className="rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800"
-            aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
-            title={open ? 'ปิดเมนู' : 'เปิดเมนู'}
-          >
-            {open ? <CollapseIcon /> : <MenuIcon />}
-          </button>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={linkClass(open)}
-              title={item.label}
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
+        <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <Link
+              to="/"
+              className="rounded-lg p-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+              title="บริการทั้งหมด"
+              aria-label="บริการทั้งหมด"
             >
-              <span className="shrink-0">{item.icon}</span>
-              {open ? <span className="truncate">{item.label}</span> : null}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="border-t border-stone-200 p-2">
+              <AppsIcon />
+            </Link>
+            <div className="flex min-w-0 items-center gap-2">
+              <img
+                src="/favicon.png"
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-lg"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-stone-900">
+                  บันทึกการลงทุน
+                </p>
+                <p className="truncate text-xs text-stone-500">{user?.name}</p>
+              </div>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => void logout()}
-            className={`flex w-full items-center gap-3 rounded-lg text-sm text-stone-500 hover:bg-stone-100 ${
-              open ? 'px-3 py-2' : 'justify-center px-2 py-2.5'
-            }`}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-500 hover:bg-stone-100"
             title="ออกจากระบบ"
           >
             <LogoutIcon />
-            {open ? <span>ออกจากระบบ</span> : null}
+            <span className="hidden sm:inline">ออกจากระบบ</span>
           </button>
         </div>
-      </aside>
+      </header>
 
-      <main className="min-w-0 flex-1 px-4 py-6 lg:px-6">
-        <div className="mx-auto max-w-6xl">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex min-h-0 flex-1">
+        <aside
+          className={`sticky top-14 flex h-[calc(100vh-3.5rem)] shrink-0 flex-col border-r border-stone-200 bg-white/90 backdrop-blur transition-[width] duration-200 ${
+            open ? 'w-56' : 'w-16'
+          }`}
+        >
+          <div
+            className={`flex items-center border-b border-stone-200 px-2 py-2 ${
+              open ? 'justify-between' : 'justify-center'
+            }`}
+          >
+            {open ? (
+              <p className="px-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+                เมนู
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              className="rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+              aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
+              title={open ? 'ปิดเมนู' : 'เปิดเมนู'}
+            >
+              {open ? <CollapseIcon /> : <MenuIcon />}
+            </button>
+          </div>
+
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={linkClass(open)}
+                title={item.label}
+              >
+                <span className="shrink-0">{item.icon}</span>
+                {open ? <span className="truncate">{item.label}</span> : null}
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="min-w-0 flex-1 px-4 py-6 lg:px-6">
+          <div className="mx-auto max-w-6xl">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
@@ -141,6 +158,22 @@ function Icon({ children }: { children: ReactNode }) {
       aria-hidden
     >
       {children}
+    </svg>
+  );
+}
+
+function AppsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+      <circle cx="5" cy="5" r="1.6" />
+      <circle cx="12" cy="5" r="1.6" />
+      <circle cx="19" cy="5" r="1.6" />
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
+      <circle cx="5" cy="19" r="1.6" />
+      <circle cx="12" cy="19" r="1.6" />
+      <circle cx="19" cy="19" r="1.6" />
     </svg>
   );
 }
