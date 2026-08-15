@@ -54,11 +54,11 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar title="บันทึกการลงทุน" />
+      <TopBar title="บันทึกการลงทุน" subtitle="by MoDMoS" />
 
       <div className="flex min-h-0 flex-1">
         <aside
-          className={`sticky top-14 flex h-[calc(100vh-3.5rem)] shrink-0 flex-col border-r border-stone-200/80 bg-stone-100/70 backdrop-blur-md transition-[width] duration-200 ${
+          className={`sticky top-16 flex h-[calc(100vh-4rem)] shrink-0 flex-col border-r border-stone-200/80 bg-stone-100/70 backdrop-blur-md transition-[width] duration-200 ${
             open ? 'w-56' : 'w-16'
           }`}
         >

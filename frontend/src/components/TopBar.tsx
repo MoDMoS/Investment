@@ -28,15 +28,15 @@ export function TopBar({
 
   return (
     <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-100/80 backdrop-blur-md">
-      <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
-        <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex h-16 items-center justify-between gap-3 px-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-3">
           <img
             src={`${import.meta.env.BASE_URL}favicon.png`}
             alt=""
-            className="h-8 w-8 shrink-0 rounded-lg shadow-md"
+            className="h-11 w-11 shrink-0 rounded-xl shadow-md"
           />
           <div className="min-w-0">
-            <p className="font-brand truncate text-sm font-bold tracking-tight text-stone-900">
+            <p className="font-brand truncate text-base font-bold tracking-tight text-stone-900">
               {title}
             </p>
             <p className="truncate text-xs text-stone-500">
