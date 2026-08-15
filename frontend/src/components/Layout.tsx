@@ -54,7 +54,7 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar title="บันทึกการลงทุน" subtitle="by MoDMoS" />
+      <TopBar title="บันทึกการลงทุน" subtitle="Service by MoDMoS" />
 
       <div className="flex min-h-0 flex-1">
         <aside
