@@ -6,9 +6,11 @@ import { AuthProvider } from './auth';
 import { PrivacyProvider } from './privacy';
 import './index.css';
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <AuthProvider>
         <PrivacyProvider>
           <App />

@@ -284,6 +284,96 @@ volumes:
 
 ---
 
+## Portal บนพอร์ต 80 (Investment + Gold Agent)
+
+ให้ `http://YOUR_VPS_IP/` เป็นหน้า portal (Investment) โดยไม่ต้องใส่ `:8080`  
+และ `http://YOUR_VPS_IP/gold/` เป็น Gold Agent
+
+| Path | ไปที่ |
+|------|--------|
+| `/` , `/api/` | Investment Docker (`127.0.0.1:8080`) |
+| `/gold/` | ไฟล์ static ของ Gold Agent |
+| `/market` `/indicator` `/strategy` | Gold Agent API (`127.0.0.1:3000`) |
+
+### 1) Build Gold Agent ด้วย base `/gold/`
+
+```bash
+cd ~/Gold_Agent/web
+VITE_BASE=/gold/ npm run build
+sudo mkdir -p /var/www/gold
+sudo rsync -a --delete dist/ /var/www/gold/
+sudo chown -R www-data:www-data /var/www/gold
+```
+
+### 2) ตั้ง Nginx เป็น portal
+
+```bash
+sudo nano /etc/nginx/sites-available/portal
+```
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    # Gold Agent API
+    location ~ ^/(market|indicator|strategy)(/|$) {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Gold Agent SPA (ไฟล์อยู่ที่ /var/www/gold/)
+    location = /gold {
+        return 301 /gold/;
+    }
+    location /gold/ {
+        root /var/www;
+        index index.html;
+        try_files $uri $uri/ /gold/index.html;
+    }
+
+    # Investment (portal + app) — Docker ยังอยู่ที่ 8080 ภายใน
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie $http_cookie;
+        proxy_pass_header Set-Cookie;
+    }
+}
+```
+
+```bash
+sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/gold-agent
+sudo ln -sf /etc/nginx/sites-available/portal /etc/nginx/sites-enabled/portal
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 3) ลิงก์จาก Investment → Gold
+
+ใน `frontend/.env` (แล้ว rebuild Investment):
+
+```env
+VITE_GOLD_AGENT_URL=http://YOUR_VPS_IP/gold/
+```
+
+```bash
+cd ~/Investment
+# ใส่ VITE_GOLD_AGENT_URL ใน frontend/.env แล้ว
+docker compose up -d --build
+```
+
+เปิด: `http://YOUR_VPS_IP/` (portal) และ `http://YOUR_VPS_IP/gold/`
+
+---
+
 ## ถ้ามีโดเมนทีหลัง
 
 ค่อยใส่ Nginx + Let's Encrypt ด้านนอก แล้วตั้ง `COOKIE_SECURE=true`  

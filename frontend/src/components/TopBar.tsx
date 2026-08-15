@@ -30,7 +30,11 @@ export function TopBar({
     <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
       <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
-          <img src="/favicon.png" alt="" className="h-8 w-8 shrink-0 rounded-lg" />
+          <img
+            src={`${import.meta.env.BASE_URL}favicon.png`}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-lg"
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-stone-900">{title}</p>
             <p className="truncate text-xs text-stone-500">
