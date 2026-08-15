@@ -57,11 +57,11 @@ export function DashboardPage() {
         </div>
         <p className="mt-1 text-sm text-stone-500">
           สรุปรวมทั้งหุ้นนอกและหุ้นไทย ·{' '}
-          <Link to="/foreign" className="text-emerald-800 hover:underline">
+          <Link to="/investment/foreign" className="text-emerald-800 hover:underline">
             ดูหุ้นนอก
           </Link>
           {' · '}
-          <Link to="/thai" className="text-emerald-800 hover:underline">
+          <Link to="/investment/thai" className="text-emerald-800 hover:underline">
             ดูหุ้นไทย
           </Link>
         </p>
@@ -76,7 +76,7 @@ export function DashboardPage() {
           label="เงินสดบาท (โบรกไทย)"
           value={money.thb(data.cashThb)}
           hint={
-            <Link to="/accounts" className="text-emerald-800 hover:underline">
+            <Link to="/investment/accounts" className="text-emerald-800 hover:underline">
               เติมเงินที่หน้าบัญชี
             </Link>
           }
@@ -127,7 +127,7 @@ export function DashboardPage() {
         <section className="card space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">หุ้นนอก</h2>
-            <Link to="/foreign" className="text-sm text-emerald-800">
+            <Link to="/investment/foreign" className="text-sm text-emerald-800">
               ดูรายละเอียด
             </Link>
           </div>
@@ -155,7 +155,7 @@ export function DashboardPage() {
         <section className="card space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">หุ้นไทย</h2>
-            <Link to="/thai" className="text-sm text-emerald-800">
+            <Link to="/investment/thai" className="text-sm text-emerald-800">
               ดูรายละเอียด
             </Link>
           </div>

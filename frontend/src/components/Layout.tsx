@@ -16,31 +16,36 @@ export function Layout() {
       <header className="border-b border-stone-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold tracking-wide text-emerald-900">
-              บันทึกการลงทุน
+            <NavLink
+              to="/"
+              className="text-sm font-semibold tracking-wide text-emerald-900 hover:underline"
+            >
+              ← บริการทั้งหมด
+            </NavLink>
+            <p className="text-xs text-stone-500">
+              บันทึกการลงทุน · {user?.name}
             </p>
-            <p className="text-xs text-stone-500">{user?.name}</p>
           </div>
           <nav className="flex flex-wrap items-center gap-1">
-            <NavLink to="/" end className={linkClass}>
+            <NavLink to="/investment" end className={linkClass}>
               ภาพรวม
             </NavLink>
-            <NavLink to="/foreign" className={linkClass}>
+            <NavLink to="/investment/foreign" className={linkClass}>
               หุ้นนอก
             </NavLink>
-            <NavLink to="/thai" className={linkClass}>
+            <NavLink to="/investment/thai" className={linkClass}>
               หุ้นไทย
             </NavLink>
-            <NavLink to="/transfers" className={linkClass}>
+            <NavLink to="/investment/transfers" className={linkClass}>
               แลกเงิน
             </NavLink>
-            <NavLink to="/trades" className={linkClass}>
+            <NavLink to="/investment/trades" className={linkClass}>
               ซื้อขายหุ้น
             </NavLink>
-            <NavLink to="/dividends" className={linkClass}>
+            <NavLink to="/investment/dividends" className={linkClass}>
               ปันผล
             </NavLink>
-            <NavLink to="/accounts" className={linkClass}>
+            <NavLink to="/investment/accounts" className={linkClass}>
               บัญชี
             </NavLink>
             <button

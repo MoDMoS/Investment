@@ -86,7 +86,7 @@ export function DashboardForeignPage() {
       <section className="card space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">พอร์ตหุ้นนอก</h2>
-          <Link to="/trades" className="text-sm text-emerald-800">
+          <Link to="/investment/trades" className="text-sm text-emerald-800">
             บันทึกซื้อขาย
           </Link>
         </div>

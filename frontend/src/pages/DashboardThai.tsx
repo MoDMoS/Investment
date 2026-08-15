@@ -61,7 +61,7 @@ export function DashboardThaiPage() {
           label="เงินสดบาท (โบรกไทย)"
           value={money.thb(data.cashThb)}
           hint={
-            <Link to="/accounts" className="text-emerald-800 hover:underline">
+            <Link to="/investment/accounts" className="text-emerald-800 hover:underline">
               เติมเงินที่หน้าบัญชี
             </Link>
           }
@@ -91,7 +91,7 @@ export function DashboardThaiPage() {
       <section className="card space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">พอร์ตหุ้นไทย</h2>
-          <Link to="/trades" className="text-sm text-emerald-800">
+          <Link to="/investment/trades" className="text-sm text-emerald-800">
             บันทึกซื้อขาย
           </Link>
         </div>
