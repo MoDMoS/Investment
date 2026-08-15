@@ -9,6 +9,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ExportModule } from './export/export.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReportsModule } from './reports/reports.module';
+import { SettingsModule } from './settings/settings.module';
+import { SnapshotsModule } from './snapshots/snapshots.module';
 import { TradesModule } from './trades/trades.module';
 import { TransfersModule } from './transfers/transfers.module';
 
@@ -22,8 +25,11 @@ import { TransfersModule } from './transfers/transfers.module';
     TransfersModule,
     TradesModule,
     DividendsModule,
+    SettingsModule,
+    SnapshotsModule,
     DashboardModule,
     ExportModule,
+    ReportsModule,
   ],
   providers: [
     {

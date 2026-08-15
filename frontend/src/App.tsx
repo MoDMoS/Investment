@@ -6,9 +6,11 @@ import { DashboardPage } from './pages/Dashboard';
 import { DashboardForeignPage } from './pages/DashboardForeign';
 import { DashboardThaiPage } from './pages/DashboardThai';
 import { DividendsPage } from './pages/Dividends';
+import { HistoryPage } from './pages/History';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
+import { ReportsPage } from './pages/Reports';
 import { TradesPage } from './pages/Trades';
 import { TransfersPage } from './pages/Transfers';
 
@@ -32,6 +34,8 @@ export function App() {
           <Route index element={<DashboardPage />} />
           <Route path="foreign" element={<DashboardForeignPage />} />
           <Route path="thai" element={<DashboardThaiPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="history" element={<HistoryPage />} />
           <Route path="transfers" element={<TransfersPage />} />
           <Route path="trades" element={<TradesPage />} />
           <Route path="dividends" element={<DividendsPage />} />

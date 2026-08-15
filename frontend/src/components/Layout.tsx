@@ -36,6 +36,12 @@ export function Layout() {
             <NavLink to="/investment/thai" className={linkClass}>
               หุ้นไทย
             </NavLink>
+            <NavLink to="/investment/reports" className={linkClass}>
+              สรุป
+            </NavLink>
+            <NavLink to="/investment/history" className={linkClass}>
+              ประวัติ
+            </NavLink>
             <NavLink to="/investment/transfers" className={linkClass}>
               แลกเงิน
             </NavLink>

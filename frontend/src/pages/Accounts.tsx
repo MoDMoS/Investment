@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import { HideMoneyButton } from '../components/HideMoneyButton';
-import { downloadCsv, downloadJson } from '../download';
+import { downloadCsv, downloadJson, csvToImportPayload, parseCsv } from '../download';
 import { apiError, todayIso } from '../format';
 import { useMoneyFmt } from '../privacy';
 import type { Account, CashEntry, ExportPayload, Market } from '../types';
@@ -158,6 +158,34 @@ export function AccountsPage() {
     }
   }
 
+  async function importFile(file: File) {
+    setError('');
+    try {
+      const text = await file.text();
+      let payload: Record<string, unknown>;
+      if (file.name.toLowerCase().endsWith('.json')) {
+        payload = JSON.parse(text) as Record<string, unknown>;
+      } else if (file.name.toLowerCase().endsWith('.csv')) {
+        payload = csvToImportPayload(file.name, parseCsv(text));
+      } else {
+        throw new Error('รองรับเฉพาะ .json หรือ .csv');
+      }
+      const result = await api.post<{
+        accountsUpserted: number;
+        transfers: number;
+        trades: number;
+        dividends: number;
+        cashEntries: number;
+      }>('/export/import', payload);
+      await load();
+      alert(
+        `นำเข้าแล้ว — บัญชีใหม่ ${result.accountsUpserted}, แลกเงิน ${result.transfers}, ซื้อขาย ${result.trades}, ปันผล ${result.dividends}, เงินสด ${result.cashEntries}`,
+      );
+    } catch (err) {
+      setError(apiError(err, 'นำเข้าไม่สำเร็จ'));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -170,13 +198,26 @@ export function AccountsPage() {
             แยกโบรกไทยกับโบรกนอก — เงินสดบาทเติมเองที่นี่ ไม่ถูกหักตอนซื้อหุ้นไทย
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="button" className="btn-ghost" onClick={() => void exportData('json')}>
             ส่งออก JSON
           </button>
           <button type="button" className="btn-ghost" onClick={() => void exportData('csv')}>
             ส่งออก CSV
           </button>
+          <label className="btn-ghost cursor-pointer">
+            นำเข้า JSON/CSV
+            <input
+              type="file"
+              accept=".json,.csv,application/json,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) void importFile(file);
+              }}
+            />
+          </label>
         </div>
       </div>
 

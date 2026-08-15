@@ -71,6 +71,32 @@ export function DashboardPage() {
         <OverviewCard label="เงินออกประเทศ" value={money.thb(data.thbOut)} />
         <OverviewCard label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
         <OverviewCard label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
+        <OverviewCard
+          label="ต้นทุนเฉลี่ยแลกออก"
+          value={data.avgOutRate != null ? `${fmt.number(data.avgOutRate, 2)} บาท/USD` : '—'}
+          hint={
+            data.usdThbRate != null
+              ? `เรทตลาด ${fmt.number(data.usdThbRate, 2)}${
+                  data.rateVsAvgOut != null
+                    ? ` · ส่วนต่าง ${data.rateVsAvgOut >= 0 ? '+' : ''}${fmt.number(data.rateVsAvgOut, 2)}`
+                    : ''
+                }`
+              : undefined
+          }
+        />
+        <OverviewCard
+          label="เป้าหมายเงินนำกลับ"
+          value={
+            data.repatriationGoalThb != null
+              ? money.thb(data.repatriationGoalThb)
+              : 'ยังไม่ตั้ง'
+          }
+          hint={
+            data.repatriationProgress != null
+              ? `คืบหน้า ${fmt.number(data.repatriationProgress * 100, 1)}% (นำกลับแล้ว ${money.thb(data.thbIn)})`
+              : 'ตั้งเป้าหมายที่หน้าหุ้นนอก'
+          }
+        />
         <OverviewCard label="เงินสด USD" value={money.usd(data.cashUsd)} />
         <OverviewCard
           label="เงินสดบาท (โบรกไทย)"

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ExportService } from './export.service';
 
@@ -9,5 +9,13 @@ export class ExportController {
   @Get()
   get(@CurrentUser() user: { userId: string }) {
     return this.exporter.get(user.userId);
+  }
+
+  @Post('import')
+  import(
+    @CurrentUser() user: { userId: string },
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.exporter.importData(user.userId, body);
   }
 }

@@ -12,6 +12,8 @@ export function DashboardForeignPage() {
   const { hidden } = usePrivacy();
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState('');
+  const [goalInput, setGoalInput] = useState('');
+  const [savingGoal, setSavingGoal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,6 +23,9 @@ export function DashboardForeignPage() {
         const next = await api.get<Dashboard>('/dashboard');
         if (!cancelled) {
           setData(next);
+          setGoalInput(
+            next.repatriationGoalThb != null ? String(next.repatriationGoalThb) : '',
+          );
           setError('');
         }
       } catch (err) {
@@ -35,6 +40,27 @@ export function DashboardForeignPage() {
       window.clearInterval(timer);
     };
   }, []);
+
+  async function saveGoal() {
+    setSavingGoal(true);
+    setError('');
+    try {
+      const value = goalInput.trim() === '' ? null : Number(goalInput);
+      if (value != null && (!Number.isFinite(value) || value < 0)) {
+        throw new Error('เป้าหมายต้องเป็นตัวเลขไม่ติดลบ');
+      }
+      await api.patch('/settings', { repatriationGoalThb: value });
+      const next = await api.get<Dashboard>('/dashboard');
+      setData(next);
+      setGoalInput(
+        next.repatriationGoalThb != null ? String(next.repatriationGoalThb) : '',
+      );
+    } catch (err) {
+      setError(apiError(err, 'บันทึกเป้าหมายไม่สำเร็จ'));
+    } finally {
+      setSavingGoal(false);
+    }
+  }
 
   if (error && !data) return <p className="text-red-700">{error}</p>;
   if (!data) return <p className="text-stone-500">กำลังโหลด...</p>;
@@ -56,10 +82,69 @@ export function DashboardForeignPage() {
         </p>
       </div>
 
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+
+      <section className="card grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+        <div>
+          <h2 className="text-lg font-semibold">เป้าหมายเงินนำกลับ</h2>
+          <p className="mt-1 text-sm text-stone-500">
+            ต้นทุนเฉลี่ยแลกออก{' '}
+            {data.avgOutRate != null ? `${fmt.number(data.avgOutRate, 2)} บาท/USD` : '—'}
+            {data.usdThbRate != null
+              ? ` · เรทตลาด ${fmt.number(data.usdThbRate, 2)}`
+              : ''}
+            {data.repatriationProgress != null
+              ? ` · คืบหน้า ${fmt.number(data.repatriationProgress * 100, 1)}%`
+              : ''}
+          </p>
+          {data.repatriationGoalThb != null ? (
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
+              <div
+                className="h-full rounded-full bg-emerald-700"
+                style={{
+                  width: `${Math.min((data.repatriationProgress ?? 0) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="block min-w-40">
+            <span className="label">เป้าหมาย (บาท)</span>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              className="input"
+              value={goalInput}
+              onChange={(e) => setGoalInput(e.target.value)}
+              placeholder="เช่น 1000000"
+            />
+          </label>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={savingGoal}
+            onClick={() => void saveGoal()}
+          >
+            {savingGoal ? 'กำลังบันทึก...' : 'บันทึก'}
+          </button>
+        </div>
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ForeignCard label="เงินออกประเทศ" value={money.thb(data.thbOut)} />
         <ForeignCard label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
         <ForeignCard label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
+        <ForeignCard
+          label="ต้นทุนเฉลี่ยแลกออก"
+          value={data.avgOutRate != null ? `${fmt.number(data.avgOutRate, 2)} บาท/USD` : '—'}
+          hint={
+            data.rateVsAvgOut != null
+              ? `เรทตลาดห่างจากต้นทุน ${data.rateVsAvgOut >= 0 ? '+' : ''}${fmt.number(data.rateVsAvgOut, 2)}`
+              : undefined
+          }
+        />
         <ForeignCard label="เงินสด USD" value={money.usd(data.cashUsd)} />
         <ForeignCard
           label="มูลค่าหุ้นนอก"

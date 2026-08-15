@@ -114,6 +114,57 @@ export type Dashboard = {
   dividendNetThb: number;
   holdingsThai: Holding[];
   holdingsForeign: Holding[];
+  repatriationGoalThb: number | null;
+  repatriationProgress: number | null;
+  usdThbRate: number | null;
+  rateVsAvgOut: number | null;
+};
+
+export type PeriodSummary = {
+  period: 'year' | 'month';
+  year: number;
+  month: number | null;
+  label: string;
+  start: string;
+  end: string;
+  thbOut: number;
+  thbIn: number;
+  thbNetAbroad: number;
+  usdOut: number;
+  usdIn: number;
+  avgOutRate: number | null;
+  dividendGrossUsd: number;
+  dividendNetUsd: number;
+  dividendGrossThb: number;
+  dividendNetThb: number;
+  realizedPnlUsd: number;
+  realizedPnlThb: number;
+  tradeCount: number;
+  transferCount: number;
+  dividendCount: number;
+  months?: {
+    month: number;
+    label: string;
+    thbOut: number;
+    thbIn: number;
+    dividendNetUsd: number;
+    dividendNetThb: number;
+    realizedPnlUsd: number;
+    realizedPnlThb: number;
+  }[];
+};
+
+export type PortfolioSnapshot = {
+  id: string;
+  date: string;
+  cashUsd: number;
+  cashThb: number;
+  marketValueUsd: number | null;
+  marketValueThb: number | null;
+  holdingsCostUsd: number;
+  holdingsCostThb: number;
+  thbNetAbroad: number;
+  totalUsdApprox: number | null;
 };
 
 export type ExportPayload = {

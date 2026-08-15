@@ -34,3 +34,75 @@ export function downloadCsv(
     new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' }),
   );
 }
+
+export function parseCsv(text: string): Record<string, string>[] {
+  const raw = text.replace(/^\uFEFF/, '').trim();
+  if (!raw) return [];
+  const lines = raw.split(/\r?\n/);
+  const headers = splitCsvLine(lines[0] ?? '');
+  return lines.slice(1).filter(Boolean).map((line) => {
+    const cells = splitCsvLine(line);
+    const row: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      row[header] = cells[index] ?? '';
+    });
+    return row;
+  });
+}
+
+function splitCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  return cells;
+}
+
+export function csvToImportPayload(
+  filename: string,
+  rows: Record<string, string>[],
+): Record<string, unknown> {
+  const lower = filename.toLowerCase();
+  if (lower.includes('account')) return { accounts: rows };
+  if (lower.includes('transfer')) return { transfers: rows };
+  if (lower.includes('trade')) return { trades: rows };
+  if (lower.includes('dividend')) return { dividends: rows };
+  if (lower.includes('cash')) return { cashEntries: rows };
+  const headers = Object.keys(rows[0] ?? {});
+  if (headers.includes('thbAmount') && headers.includes('usdAmount')) {
+    return { transfers: rows };
+  }
+  if (headers.includes('side') && headers.includes('priceUsd')) {
+    return { trades: rows };
+  }
+  if (headers.includes('grossUsd') || headers.includes('netUsd')) {
+    return { dividends: rows };
+  }
+  if (headers.includes('amount') && headers.includes('direction')) {
+    return { cashEntries: rows };
+  }
+  if (headers.includes('kind') && headers.includes('name')) {
+    return { accounts: rows };
+  }
+  throw new Error('ไม่รู้จักชนิด CSV — ตั้งชื่อไฟล์แบบ accounts/transfers/trades/dividends/cash-entries');
+}
