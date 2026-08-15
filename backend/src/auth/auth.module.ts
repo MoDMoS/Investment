@@ -6,6 +6,14 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 
+function sessionMaxAgeSeconds(config: ConfigService) {
+  const hours = Number(config.get<string>('SESSION_MAX_AGE_HOURS') ?? 12);
+  if (Number.isFinite(hours) && hours > 0) {
+    return Math.round(hours * 60 * 60);
+  }
+  return 12 * 60 * 60;
+}
+
 @Module({
   imports: [
     PassportModule,
@@ -14,7 +22,7 @@ import { JwtStrategy } from './jwt.strategy';
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('AUTH_SECRET'),
         signOptions: {
-          expiresIn: config.get<string>('JWT_EXPIRES_IN') ?? '12h',
+          expiresIn: sessionMaxAgeSeconds(config),
         },
       }),
     }),
