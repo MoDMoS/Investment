@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
-import { useAuth } from '../auth';
+import { NavLink, Outlet } from 'react-router-dom';
+import { TopBar } from './TopBar';
 
 const STORAGE_KEY = 'investment-nav-open';
 
@@ -42,7 +42,6 @@ const linkClass = (open: boolean) =>
     }`;
 
 export function Layout() {
-  const { user, logout } = useAuth();
   const [open, setOpen] = useState(readOpen);
 
   useEffect(() => {
@@ -55,42 +54,7 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
-        <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Link
-              to="/"
-              className="rounded-lg p-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-              title="บริการทั้งหมด"
-              aria-label="บริการทั้งหมด"
-            >
-              <AppsIcon />
-            </Link>
-            <div className="flex min-w-0 items-center gap-2">
-              <img
-                src="/favicon.png"
-                alt=""
-                className="h-8 w-8 shrink-0 rounded-lg"
-              />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-stone-900">
-                  บันทึกการลงทุน
-                </p>
-                <p className="truncate text-xs text-stone-500">{user?.name}</p>
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-500 hover:bg-stone-100"
-            title="ออกจากระบบ"
-          >
-            <LogoutIcon />
-            <span className="hidden sm:inline">ออกจากระบบ</span>
-          </button>
-        </div>
-      </header>
+      <TopBar title="บันทึกการลงทุน" />
 
       <div className="flex min-h-0 flex-1">
         <aside
@@ -158,22 +122,6 @@ function Icon({ children }: { children: ReactNode }) {
       aria-hidden
     >
       {children}
-    </svg>
-  );
-}
-
-function AppsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
-      <circle cx="5" cy="5" r="1.6" />
-      <circle cx="12" cy="5" r="1.6" />
-      <circle cx="19" cy="5" r="1.6" />
-      <circle cx="5" cy="12" r="1.6" />
-      <circle cx="12" cy="12" r="1.6" />
-      <circle cx="19" cy="12" r="1.6" />
-      <circle cx="5" cy="19" r="1.6" />
-      <circle cx="12" cy="19" r="1.6" />
-      <circle cx="19" cy="19" r="1.6" />
     </svg>
   );
 }
@@ -272,15 +220,6 @@ function WalletIcon() {
       <path d="M3 7h15a3 3 0 013 3v7a3 3 0 01-3 3H6a3 3 0 01-3-3V7z" />
       <path d="M3 7l2.2-2.5A2 2 0 016.7 4H16" />
       <circle cx="16.5" cy="13.5" r="1" fill="currentColor" stroke="none" />
-    </Icon>
-  );
-}
-
-function LogoutIcon() {
-  return (
-    <Icon>
-      <path d="M10 7V5a2 2 0 012-2h7v18h-7a2 2 0 01-2-2v-2" />
-      <path d="M15 12H3M6 9l-3 3 3 3" />
     </Icon>
   );
 }

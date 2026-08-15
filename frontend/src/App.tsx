@@ -9,6 +9,7 @@ import { DividendsPage } from './pages/Dividends';
 import { HistoryPage } from './pages/History';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
+import { ProfilePage } from './pages/Profile';
 import { RegisterPage } from './pages/Register';
 import { ReportsPage } from './pages/Reports';
 import { TradesPage } from './pages/Trades';
@@ -30,6 +31,7 @@ export function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<Protected />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/investment" element={<Layout />}>
           <Route index element={<DashboardPage />} />
           <Route path="foreign" element={<DashboardForeignPage />} />
