@@ -8,11 +8,11 @@ import {
   type ReactNode,
 } from 'react';
 import { api } from './api';
+import { redirectToPortalLogin } from './portalAuth';
 import type { User } from './types';
 
 /** ออกจากระบบอัตโนมัติเมื่อไม่มีการใช้งาน */
 const IDLE_MS = 60 * 60 * 1000;
-const AUTH_NOTICE_KEY = 'auth_notice';
 const AUTH_UNAUTHORIZED = 'auth:unauthorized';
 
 type AuthContextValue = {
@@ -24,38 +24,20 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function takeAuthNotice() {
-  try {
-    const message = sessionStorage.getItem(AUTH_NOTICE_KEY);
-    if (message) sessionStorage.removeItem(AUTH_NOTICE_KEY);
-    return message;
-  } catch {
-    return null;
-  }
-}
-
-function setAuthNotice(message: string) {
-  try {
-    sessionStorage.setItem(AUTH_NOTICE_KEY, message);
-  } catch {
-    /* ignore */
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const userRef = useRef(user);
   userRef.current = user;
 
-  async function logout(notice?: string) {
+  async function logout() {
     try {
       await api.post('/auth/logout');
     } catch {
-      /* ignore — เคลียร์ฝั่ง client อยู่ดี */
+      /* ignore */
     }
-    if (notice) setAuthNotice(notice);
     setUser(null);
+    redirectToPortalLogin();
   }
 
   useEffect(() => {
@@ -69,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     function onUnauthorized() {
       if (!userRef.current) return;
-      setAuthNotice('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
       setUser(null);
+      redirectToPortalLogin('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
     }
     window.addEventListener(AUTH_UNAUTHORIZED, onUnauthorized);
     return () => window.removeEventListener(AUTH_UNAUTHORIZED, onUnauthorized);
@@ -83,11 +65,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const bump = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        void logout('ไม่มีการใช้งานนานเกินไป กรุณาเข้าสู่ระบบใหม่');
+        void (async () => {
+          try {
+            await api.post('/auth/logout');
+          } catch {
+            /* ignore */
+          }
+          setUser(null);
+          redirectToPortalLogin('ไม่มีการใช้งานนานเกินไป กรุณาเข้าสู่ระบบใหม่');
+        })();
       }, IDLE_MS);
     };
 
-    const events = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll', 'visibilitychange'] as const;
+    const events = [
+      'mousedown',
+      'mousemove',
+      'keydown',
+      'touchstart',
+      'scroll',
+      'visibilitychange',
+    ] as const;
     for (const event of events) {
       window.addEventListener(event, bump, { passive: true });
     }

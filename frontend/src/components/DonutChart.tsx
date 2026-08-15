@@ -4,14 +4,14 @@ type Slice = {
 };
 
 const COLORS = [
-  '#c8f54a',
-  '#38b28c',
-  '#d4a24c',
-  '#5b9fd4',
-  '#a78bfa',
+  '#60a5fa',
+  '#3b82f6',
+  '#38bdf8',
+  '#818cf8',
+  '#22d3ee',
   '#f07178',
   '#2dd4bf',
-  '#a3e635',
+  '#a78bfa',
   '#f472b6',
   '#fb923c',
 ];
@@ -41,7 +41,7 @@ export function DonutChart({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#1a3a32"
+            stroke="#1c2a42"
             strokeWidth={stroke}
           />
           {total > 0

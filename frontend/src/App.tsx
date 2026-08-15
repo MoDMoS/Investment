@@ -7,10 +7,8 @@ import { DashboardForeignPage } from './pages/DashboardForeign';
 import { DashboardThaiPage } from './pages/DashboardThai';
 import { DividendsPage } from './pages/Dividends';
 import { HistoryPage } from './pages/History';
-import { HomePage } from './pages/Home';
-import { LoginPage } from './pages/Login';
+import { PortalAuthRedirect } from './portalAuth';
 import { ProfilePage } from './pages/Profile';
-import { RegisterPage } from './pages/Register';
 import { ReportsPage } from './pages/Reports';
 import { TradesPage } from './pages/Trades';
 import { TransfersPage } from './pages/Transfers';
@@ -20,17 +18,17 @@ function Protected() {
   if (loading) {
     return <p className="p-8 text-center text-stone-500">กำลังโหลด...</p>;
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <PortalAuthRedirect mode="login" />;
   return <Outlet />;
 }
 
 export function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<PortalAuthRedirect mode="login" />} />
+      <Route path="/register" element={<PortalAuthRedirect mode="register" />} />
       <Route element={<Protected />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Navigate to="/investment" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/investment" element={<Layout />}>
           <Route index element={<DashboardPage />} />
@@ -50,7 +48,7 @@ export function App() {
       <Route path="/trades" element={<Navigate to="/investment/trades" replace />} />
       <Route path="/dividends" element={<Navigate to="/investment/dividends" replace />} />
       <Route path="/accounts" element={<Navigate to="/investment/accounts" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/investment" replace />} />
     </Routes>
   );
 }

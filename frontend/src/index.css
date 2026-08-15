@@ -1,35 +1,35 @@
 @import "tailwindcss";
 
-/* MoDMoS dark theme — aligned with Portal / Gold Agent */
+/* Investment dark blue theme */
 @theme {
   --font-sans: "IBM Plex Sans Thai", "Noto Sans Thai", "Outfit", ui-sans-serif, system-ui, sans-serif;
 
-  --color-white: #122a25;
-  --color-black: #e8f2ec;
+  --color-white: #121a2a;
+  --color-black: #e8eef8;
 
-  --color-stone-50: #0a1c18;
-  --color-stone-100: #0f2420;
-  --color-stone-200: #1a3a32;
-  --color-stone-300: #254840;
-  --color-stone-400: #6b8a7e;
-  --color-stone-500: #8aa399;
-  --color-stone-600: #a3b7ad;
-  --color-stone-700: #c5d4cc;
-  --color-stone-800: #dce8e2;
-  --color-stone-900: #e8f2ec;
-  --color-stone-950: #f3faf6;
+  --color-stone-50: #0a101c;
+  --color-stone-100: #121a2a;
+  --color-stone-200: #1c2a42;
+  --color-stone-300: #2a3d5c;
+  --color-stone-400: #6b7f9e;
+  --color-stone-500: #8a9bb5;
+  --color-stone-600: #a8b6cb;
+  --color-stone-700: #c5d0e0;
+  --color-stone-800: #dce4f0;
+  --color-stone-900: #e8eef8;
+  --color-stone-950: #f3f6fb;
 
-  --color-emerald-50: rgba(200, 245, 74, 0.1);
-  --color-emerald-100: rgba(200, 245, 74, 0.16);
-  --color-emerald-200: rgba(200, 245, 74, 0.28);
-  --color-emerald-300: #9fcf3a;
-  --color-emerald-400: #b4e645;
-  --color-emerald-500: #c8f54a;
-  --color-emerald-600: #c8f54a;
-  --color-emerald-700: #b8e63c;
-  --color-emerald-800: #c8f54a;
-  --color-emerald-900: #d4f86a;
-  --color-emerald-950: #e8ffb0;
+  --color-emerald-50: rgba(96, 165, 250, 0.1);
+  --color-emerald-100: rgba(96, 165, 250, 0.16);
+  --color-emerald-200: rgba(96, 165, 250, 0.28);
+  --color-emerald-300: #60a5fa;
+  --color-emerald-400: #6eb6ff;
+  --color-emerald-500: #60a5fa;
+  --color-emerald-600: #3b82f6;
+  --color-emerald-700: #4ea1ff;
+  --color-emerald-800: #60a5fa;
+  --color-emerald-900: #93c5fd;
+  --color-emerald-950: #bfdbfe;
 
   --color-red-50: rgba(232, 106, 106, 0.12);
   --color-red-100: rgba(232, 106, 106, 0.18);
@@ -44,12 +44,12 @@
 
 :root {
   color-scheme: dark;
-  --ink: #071411;
-  --panel: #122a25;
-  --panel-border: rgba(200, 245, 74, 0.16);
-  --text: #e8f2ec;
-  --muted: #8aa399;
-  --accent: #c8f54a;
+  --ink: #070b14;
+  --panel: #121a2a;
+  --panel-border: rgba(96, 165, 250, 0.18);
+  --text: #e8eef8;
+  --muted: #8a9bb5;
+  --accent: #60a5fa;
   --font-brand: "Syne", sans-serif;
   --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Outfit", sans-serif;
 }
@@ -72,9 +72,9 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background:
-    radial-gradient(ellipse 55% 45% at 12% -5%, rgba(56, 189, 140, 0.2), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 92% 0%, rgba(200, 245, 74, 0.08), transparent 55%),
-    linear-gradient(180deg, #0d2a24 0%, var(--ink) 55%, #050f0d 100%);
+    radial-gradient(ellipse 55% 45% at 12% -5%, rgba(59, 130, 246, 0.22), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 92% 0%, rgba(96, 165, 250, 0.1), transparent 55%),
+    linear-gradient(180deg, #0d1628 0%, var(--ink) 55%, #05070f 100%);
   background-attachment: fixed;
 }
 
@@ -86,7 +86,7 @@ body {
   width: 100%;
   border-radius: 0.75rem;
   border: 1px solid var(--panel-border);
-  background: #0a1c18;
+  background: #0a101c;
   color: var(--text);
   padding: 0.6rem 0.8rem;
   font-size: 0.95rem;
@@ -94,8 +94,8 @@ body {
 }
 
 .input:focus {
-  border-color: rgba(200, 245, 74, 0.55);
-  box-shadow: 0 0 0 3px rgba(200, 245, 74, 0.14);
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
 }
 
 .input:disabled {
@@ -112,8 +112,8 @@ body {
 .btn-primary {
   border: 0;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #c8f54a, #9fcf3a);
-  color: #071411;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  color: #070b14;
   padding: 0.65rem 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -122,7 +122,7 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  filter: brightness(1.05);
+  filter: brightness(1.06);
 }
 
 .btn-primary:disabled {
@@ -144,10 +144,10 @@ body {
 
 .card {
   border: 1px solid var(--panel-border);
-  background: linear-gradient(160deg, rgba(18, 42, 37, 0.96), rgba(10, 28, 24, 0.92));
+  background: linear-gradient(160deg, rgba(18, 26, 42, 0.96), rgba(10, 16, 28, 0.92));
   border-radius: 1rem;
   padding: 1.25rem;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(8px);
 }
 
@@ -161,7 +161,7 @@ body {
 .table td {
   padding: 0.7rem 0.5rem;
   text-align: left;
-  border-bottom: 1px solid rgba(232, 242, 236, 0.08);
+  border-bottom: 1px solid rgba(232, 238, 248, 0.08);
 }
 
 .table th {
@@ -189,8 +189,8 @@ body {
 }
 
 .table tr.trade-buy td {
-  background: rgba(200, 245, 74, 0.1);
-  color: #d4f86a;
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
 }
 
 .table tr.trade-sell td {
