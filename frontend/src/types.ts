@@ -2,6 +2,8 @@ export type User = {
   id: string;
   email: string;
   name: string;
+  roles?: string[];
+  permissions?: string[];
 };
 
 export type Market = 'th' | 'foreign';

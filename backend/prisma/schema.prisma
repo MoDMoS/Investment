@@ -8,10 +8,10 @@ datasource db {
 }
 
 model User {
-  id                   String              @id @default(cuid())
+  id                   String              @id
   email                String              @unique
   name                 String
-  passwordHash         String
+  passwordHash         String              @default("")
   repatriationGoalThb  Float?
   createdAt            DateTime            @default(now())
   accounts             Account[]
