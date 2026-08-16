@@ -8,7 +8,7 @@
 
 - `http://YOUR_VPS_IP:8080` → หน้า React
 - `http://YOUR_VPS_IP:8080/api` → NestJS
-- ฐานข้อมูล SQLite ที่ `./data/app.db`
+- ฐานข้อมูล PostgreSQL ที่ docker `investment` (host พอร์ต `5434`)
 - พอร์ต API `3000` ไม่เปิดออกเน็ต
 
 Let's Encrypt ออกใบรับรองให้โดเมนเท่านั้น ใช้ IP จึงเป็น HTTP
@@ -162,16 +162,20 @@ curl -I http://127.0.0.1:8080
 
 ## 8. สำรองฐานข้อมูลทุกวัน
 
-ฐานข้อมูลอยู่ที่ `/investment/data/app.db`
+ฐานข้อมูลเป็น PostgreSQL (docker volume `investment_pg`)
+
+สำรองแบบง่าย:
 
 ```bash
-crontab -e
+mkdir -p ~/Investment/backups
+docker compose -f ~/Investment/docker-compose.yml exec -T db \
+  pg_dump -U investment investment > ~/Investment/backups/investment-$(date +%F).sql
 ```
 
-เพิ่มบรรทัด:
+หรือใส่ cron:
 
 ```cron
-0 2 * * * cp /investment/data/app.db /investment/backups/app-$(date +\%F).db
+0 2 * * * docker compose -f $HOME/Investment/docker-compose.yml exec -T db pg_dump -U investment investment > $HOME/Investment/backups/investment-$(date +\%F).sql
 ```
 
 ลบไฟล์เก่ากว่า 30 วัน (ไม่บังคับ):

@@ -1,14 +1,32 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: investment
+      POSTGRES_PASSWORD: investment
+      POSTGRES_DB: investment
+    ports:
+      - "5434:5432"
+    volumes:
+      - investment_pg:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U investment -d investment"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build: ./backend
     environment:
-      DATABASE_URL: file:/data/app.db
+      DATABASE_URL: postgresql://investment:investment@db:5432/investment?schema=public
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       NODE_ENV: production
       PORT: 3000
-    volumes:
-      - ./data:/data
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   web:
@@ -21,3 +39,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  investment_pg:

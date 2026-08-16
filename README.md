@@ -5,17 +5,17 @@
 ## โครงสร้าง
 
 - `frontend/` — Vite + React + Tailwind
-- `backend/` — NestJS + Prisma + SQLite
+- `backend/` — NestJS + Prisma + **PostgreSQL**
 
 ## รันบนเครื่องตัวเอง
 
-ต้องมี Node.js 20+
+ต้องมี Node.js 20+ และ Postgres (หรือ `docker compose up -d db` จาก root โปรเจกต์)
 
 ```bash
 cd backend
 copy .env.example .env
 npm install
-npx prisma db push
+npx prisma migrate deploy
 npm run start:dev
 ```
 
@@ -52,5 +52,28 @@ docker compose up -d --build
 
 - `/` ไปที่หน้า React
 - `/api` ไปที่ NestJS
-- ฐานข้อมูลอยู่ที่ `./data/app.db`
+- ฐานข้อมูล **PostgreSQL** (docker service `db` ที่ host พอร์ต `5434`)
 - อย่าเปิดพอร์ต 3000 ของ API ออกเน็ตตรงๆ
+
+### ย้ายข้อมูลจาก SQLite เดิม (ครั้งเดียว)
+
+```bash
+# สำรองก่อน
+cp data/app.db data/app.db.bak-$(date +%F)
+
+cd backend
+cp .env.example .env   # DATABASE_URL ชี้ localhost:5434
+npm ci
+npx prisma migrate deploy
+
+# จาก root โปรเจกต์ให้ Postgres ขึ้นก่อน
+cd ..
+docker compose up -d db
+# รอ healthy แล้ว
+cd backend
+unset DATABASE_URL
+SQLITE_PATH=../data/app.db npm run migrate:from-sqlite
+
+cd ..
+docker compose up -d --build
+```
