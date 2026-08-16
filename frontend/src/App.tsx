@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth';
 import { Layout } from './components/Layout';
@@ -8,7 +9,6 @@ import { DashboardThaiPage } from './pages/DashboardThai';
 import { DividendsPage } from './pages/Dividends';
 import { HistoryPage } from './pages/History';
 import { PortalAuthRedirect } from './portalAuth';
-import { ProfilePage } from './pages/Profile';
 import { ReportsPage } from './pages/Reports';
 import { TradesPage } from './pages/Trades';
 import { TransfersPage } from './pages/Transfers';
@@ -22,14 +22,21 @@ function Protected() {
   return <Outlet />;
 }
 
+function PortalProfileRedirect() {
+  useEffect(() => {
+    window.location.replace('/profile');
+  }, []);
+  return <p className="p-8 text-center text-stone-500">กำลังไปหน้าโปรไฟล์...</p>;
+}
+
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<PortalAuthRedirect mode="login" />} />
       <Route path="/register" element={<PortalAuthRedirect mode="register" />} />
+      <Route path="/profile" element={<PortalProfileRedirect />} />
       <Route element={<Protected />}>
         <Route path="/" element={<Navigate to="/investment" replace />} />
-        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/investment" element={<Layout />}>
           <Route index element={<DashboardPage />} />
           <Route path="foreign" element={<DashboardForeignPage />} />

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 export function TopBar({
@@ -10,7 +9,6 @@ export function TopBar({
   subtitle?: string;
 }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -74,17 +72,14 @@ export function TopBar({
                   </p>
                   <p className="truncate text-xs text-stone-500">{user?.email}</p>
                 </div>
-                <button
-                  type="button"
+                <a
                   role="menuitem"
+                  href="/profile"
                   className="block w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-50"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    navigate('/profile');
-                  }}
+                  onClick={() => setMenuOpen(false)}
                 >
                   จัดการโปรไฟล์
-                </button>
+                </a>
                 <button
                   type="button"
                   role="menuitem"
