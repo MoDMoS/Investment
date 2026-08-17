@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { firstAccountId, useAccounts } from '../accounts';
 import { api } from '../api';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { apiError, fmt, todayIso } from '../format';
 import { useMoneyFmt } from '../privacy';
@@ -36,6 +37,8 @@ export function DividendsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [pending, setPending] = useState<Dividend | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [tickerQuery, setTickerQuery] = useState('');
   const [marketFilter, setMarketFilter] = useState<'all' | Market>('all');
   const [yearFilter, setYearFilter] = useState('all');
@@ -103,14 +106,24 @@ export function DividendsPage() {
     });
   }
 
-  async function remove(id: string) {
-    if (!confirm('ลบรายการนี้?')) return;
-    await api.delete(`/dividends/${id}`);
-    if (editingId === id) {
-      setEditingId(null);
-      setForm(empty());
+  async function confirmRemove() {
+    if (!pending) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await api.delete(`/dividends/${pending.id}`);
+      if (editingId === pending.id) {
+        setEditingId(null);
+        setForm(empty());
+      }
+      setPending(null);
+      await load();
+    } catch (err) {
+      setError(apiError(err, 'ลบรายการไม่สำเร็จ'));
+      setPending(null);
+    } finally {
+      setDeleting(false);
     }
-    await load();
   }
 
   const years = useMemo(() => {
@@ -429,7 +442,7 @@ export function DividendsPage() {
                         </button>
                         <button
                           className="ml-3 text-sm text-red-700"
-                          onClick={() => void remove(row.id)}
+                          onClick={() => setPending(row)}
                         >
                           ลบ
                         </button>
@@ -442,6 +455,19 @@ export function DividendsPage() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        open={Boolean(pending)}
+        title="ลบปันผล"
+        message={
+          pending ? `ลบปันผล ${pending.ticker} วันที่ ${pending.date}?` : ''
+        }
+        confirmLabel="ลบ"
+        danger
+        busy={deleting}
+        onCancel={() => setPending(null)}
+        onConfirm={() => void confirmRemove()}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { firstAccountId, useAccounts } from '../accounts';
 import { api } from '../api';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { SortTh } from '../components/SortTh';
 import { apiError, fmt, todayIso } from '../format';
@@ -40,6 +41,8 @@ export function TradesPage() {
   const [error, setError] = useState('');
   const [warning, setWarning] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [pending, setPending] = useState<Trade | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [tickerQuery, setTickerQuery] = useState('');
   const [marketFilter, setMarketFilter] = useState<'all' | Market>('all');
   const [sideFilter, setSideFilter] = useState<'all' | 'buy' | 'sell'>('all');
@@ -118,14 +121,24 @@ export function TradesPage() {
     });
   }
 
-  async function remove(id: string) {
-    if (!confirm('ลบรายการนี้?')) return;
-    await api.delete(`/trades/${id}`);
-    if (editingId === id) {
-      setEditingId(null);
-      setForm(empty());
+  async function confirmRemove() {
+    if (!pending) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await api.delete(`/trades/${pending.id}`);
+      if (editingId === pending.id) {
+        setEditingId(null);
+        setForm(empty());
+      }
+      setPending(null);
+      await load();
+    } catch (err) {
+      setError(apiError(err, 'ลบรายการไม่สำเร็จ'));
+      setPending(null);
+    } finally {
+      setDeleting(false);
     }
-    await load();
   }
 
   const visibleRows = useMemo(() => {
@@ -435,7 +448,7 @@ export function TradesPage() {
                       </button>
                       <button
                         className="ml-3 text-sm text-red-700"
-                        onClick={() => void remove(row.id)}
+                        onClick={() => setPending(row)}
                       >
                         ลบ
                       </button>
@@ -447,6 +460,21 @@ export function TradesPage() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        open={Boolean(pending)}
+        title="ลบรายการซื้อขาย"
+        message={
+          pending
+            ? `ลบ${pending.side === 'buy' ? 'ซื้อ' : 'ขาย'} ${pending.ticker} วันที่ ${pending.date}?`
+            : ''
+        }
+        confirmLabel="ลบ"
+        danger
+        busy={deleting}
+        onCancel={() => setPending(null)}
+        onConfirm={() => void confirmRemove()}
+      />
     </div>
   );
 }

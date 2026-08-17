@@ -142,6 +142,21 @@ body {
   color: var(--text);
 }
 
+.btn-danger {
+  border: 0;
+  border-radius: 0.75rem;
+  background: #e86a6a;
+  color: #070b14;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .card {
   border: 1px solid var(--panel-border);
   background: linear-gradient(160deg, rgba(18, 26, 42, 0.96), rgba(10, 16, 28, 0.92));

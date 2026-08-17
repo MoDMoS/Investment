@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { HideMoneyButton } from '../components/HideMoneyButton';
 import { downloadCsv, downloadJson, csvToImportPayload, parseCsv } from '../download';
 import { apiError, todayIso } from '../format';
@@ -23,6 +24,14 @@ const emptyCash = (accountId = ''): CashForm => ({
   note: '',
 });
 
+type ImportResult = {
+  accountsUpserted: number;
+  transfers: number;
+  trades: number;
+  dividends: number;
+  cashEntries: number;
+};
+
 export function AccountsPage() {
   const money = useMoneyFmt();
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -36,6 +45,11 @@ export function AccountsPage() {
   const [editingCashId, setEditingCashId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAccount, setPendingAccount] = useState<Account | null>(null);
+  const [pendingCash, setPendingCash] = useState<CashEntry | null>(null);
+  const [pendingImport, setPendingImport] = useState<File | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [modalBusy, setModalBusy] = useState(false);
   const selectedCashAccount = accounts.find((row) => row.id === cashForm.accountId);
   const thaiCash = accounts.find((row) => row.kind === 'th');
 
@@ -76,13 +90,19 @@ export function AccountsPage() {
     }
   }
 
-  async function removeAccount(id: string) {
-    if (!confirm('ลบบัญชีนี้?')) return;
+  async function confirmRemoveAccount() {
+    if (!pendingAccount) return;
+    setModalBusy(true);
+    setError('');
     try {
-      await api.delete(`/accounts/${id}`);
+      await api.delete(`/accounts/${pendingAccount.id}`);
+      setPendingAccount(null);
       await load();
     } catch (err) {
       setError(apiError(err, 'ลบบัญชีไม่สำเร็จ'));
+      setPendingAccount(null);
+    } finally {
+      setModalBusy(false);
     }
   }
 
@@ -113,14 +133,24 @@ export function AccountsPage() {
     }
   }
 
-  async function removeCash(id: string) {
-    if (!confirm('ลบรายการนี้?')) return;
-    await api.delete(`/cash-entries/${id}`);
-    if (editingCashId === id) {
-      setEditingCashId(null);
-      setCashForm(emptyCash(accounts[0]?.id ?? ''));
+  async function confirmRemoveCash() {
+    if (!pendingCash) return;
+    setModalBusy(true);
+    setError('');
+    try {
+      await api.delete(`/cash-entries/${pendingCash.id}`);
+      if (editingCashId === pendingCash.id) {
+        setEditingCashId(null);
+        setCashForm(emptyCash(accounts[0]?.id ?? ''));
+      }
+      setPendingCash(null);
+      await load();
+    } catch (err) {
+      setError(apiError(err, 'ลบรายการเงินสดไม่สำเร็จ'));
+      setPendingCash(null);
+    } finally {
+      setModalBusy(false);
     }
-    await load();
   }
 
   async function exportData(kind: 'json' | 'csv') {
@@ -158,31 +188,29 @@ export function AccountsPage() {
     }
   }
 
-  async function importFile(file: File) {
+  async function confirmImport() {
+    if (!pendingImport) return;
+    setModalBusy(true);
     setError('');
     try {
-      const text = await file.text();
+      const text = await pendingImport.text();
       let payload: Record<string, unknown>;
-      if (file.name.toLowerCase().endsWith('.json')) {
+      if (pendingImport.name.toLowerCase().endsWith('.json')) {
         payload = JSON.parse(text) as Record<string, unknown>;
-      } else if (file.name.toLowerCase().endsWith('.csv')) {
-        payload = csvToImportPayload(file.name, parseCsv(text));
+      } else if (pendingImport.name.toLowerCase().endsWith('.csv')) {
+        payload = csvToImportPayload(pendingImport.name, parseCsv(text));
       } else {
         throw new Error('รองรับเฉพาะ .json หรือ .csv');
       }
-      const result = await api.post<{
-        accountsUpserted: number;
-        transfers: number;
-        trades: number;
-        dividends: number;
-        cashEntries: number;
-      }>('/export/import', payload);
+      const result = await api.post<ImportResult>('/export/import', payload);
       await load();
-      alert(
-        `นำเข้าแล้ว — บัญชีใหม่ ${result.accountsUpserted}, แลกเงิน ${result.transfers}, ซื้อขาย ${result.trades}, ปันผล ${result.dividends}, เงินสด ${result.cashEntries}`,
-      );
+      setPendingImport(null);
+      setImportResult(result);
     } catch (err) {
       setError(apiError(err, 'นำเข้าไม่สำเร็จ'));
+      setPendingImport(null);
+    } finally {
+      setModalBusy(false);
     }
   }
 
@@ -214,7 +242,7 @@ export function AccountsPage() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = '';
-                if (file) void importFile(file);
+                if (file) setPendingImport(file);
               }}
             />
           </label>
@@ -281,7 +309,7 @@ export function AccountsPage() {
                   </button>
                   <button
                     className="ml-3 text-sm text-red-700"
-                    onClick={() => void removeAccount(row.id)}
+                    onClick={() => setPendingAccount(row)}
                   >
                     ลบ
                   </button>
@@ -474,7 +502,7 @@ export function AccountsPage() {
                     </button>
                     <button
                       className="ml-3 text-sm text-red-700"
-                      onClick={() => void removeCash(row.id)}
+                      onClick={() => setPendingCash(row)}
                     >
                       ลบ
                     </button>
@@ -485,6 +513,61 @@ export function AccountsPage() {
           </table>
         )}
       </section>
+
+      <ConfirmModal
+        open={Boolean(pendingAccount)}
+        title="ลบบัญชี"
+        message={
+          pendingAccount
+            ? `ลบบัญชี "${pendingAccount.name}"? รายการที่ผูกกับบัญชีนี้อาจได้รับผลกระทบ`
+            : ''
+        }
+        confirmLabel="ลบ"
+        danger
+        busy={modalBusy}
+        onCancel={() => setPendingAccount(null)}
+        onConfirm={() => void confirmRemoveAccount()}
+      />
+      <ConfirmModal
+        open={Boolean(pendingCash)}
+        title="ลบรายการเงินสด"
+        message={
+          pendingCash
+            ? `ลบรายการเงินสดวันที่ ${pendingCash.date} (${pendingCash.direction === 'in' ? 'เข้า' : 'ออก'})?`
+            : ''
+        }
+        confirmLabel="ลบ"
+        danger
+        busy={modalBusy}
+        onCancel={() => setPendingCash(null)}
+        onConfirm={() => void confirmRemoveCash()}
+      />
+      <ConfirmModal
+        open={Boolean(pendingImport)}
+        title="นำเข้าข้อมูล"
+        message={
+          pendingImport
+            ? `นำเข้าไฟล์ ${pendingImport.name}? ข้อมูลจะถูกเพิ่มเข้าบัญชีที่มีอยู่`
+            : ''
+        }
+        confirmLabel="นำเข้า"
+        busy={modalBusy}
+        onCancel={() => setPendingImport(null)}
+        onConfirm={() => void confirmImport()}
+      />
+      <ConfirmModal
+        open={Boolean(importResult)}
+        title="นำเข้าสำเร็จ"
+        message={
+          importResult
+            ? `บัญชีใหม่ ${importResult.accountsUpserted}\nแลกเงิน ${importResult.transfers}\nซื้อขาย ${importResult.trades}\nปันผล ${importResult.dividends}\nเงินสด ${importResult.cashEntries}`
+            : ''
+        }
+        confirmLabel="ปิด"
+        hideCancel
+        onCancel={() => setImportResult(null)}
+        onConfirm={() => setImportResult(null)}
+      />
     </div>
   );
 }
