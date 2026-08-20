@@ -97,7 +97,11 @@ export function DashboardPage() {
               : 'ตั้งเป้าหมายที่หน้าหุ้นนอก'
           }
         />
-        <OverviewCard label="เงินสด USD" value={money.usd(data.cashUsd)} />
+        <OverviewCard
+          label="เงินสด USD"
+          value={money.usd(data.cashUsd)}
+          hint={approxThb(money, data.cashUsd, data.usdThbRate)}
+        />
         <OverviewCard
           label="เงินสดบาท (โบรกไทย)"
           value={money.thb(data.cashThb)}
@@ -110,7 +114,10 @@ export function DashboardPage() {
         <OverviewCard
           label="มูลค่าหุ้นนอก"
           value={data.marketValueUsd != null ? money.usd(data.marketValueUsd) : '—'}
-          hint={`ต้นทุน ${money.usd(data.holdingsCostUsd)}`}
+          hint={joinHints(
+            `ต้นทุน ${money.usd(data.holdingsCostUsd)}`,
+            approxThb(money, data.marketValueUsd, data.usdThbRate),
+          )}
         />
         <OverviewCard
           label="มูลค่าหุ้นไทย"
@@ -120,6 +127,7 @@ export function DashboardPage() {
         <OverviewCard
           label="P/L หุ้นนอก (ยังไม่ปิด)"
           value={data.pnlUsd != null ? money.signed(fmt.usd, data.pnlUsd) : '—'}
+          hint={approxThbSigned(money, data.pnlUsd, data.usdThbRate)}
           tone={hidden ? 'flat' : overviewTone(data.pnlUsd)}
         />
         <OverviewCard
@@ -130,6 +138,7 @@ export function DashboardPage() {
         <OverviewCard
           label="P/L ที่ปิดแล้ว (USD)"
           value={money.signed(fmt.usd, data.realizedPnlUsd)}
+          hint={approxThbSigned(money, data.realizedPnlUsd, data.usdThbRate)}
           tone={hidden ? 'flat' : overviewTone(data.realizedPnlUsd)}
         />
         <OverviewCard
@@ -140,7 +149,10 @@ export function DashboardPage() {
         <OverviewCard
           label="ปันผลสุทธิ USD"
           value={money.usd(data.dividendNetUsd)}
-          hint="เข้าเงินสด USD"
+          hint={joinHints(
+            'เข้าเงินสด USD',
+            approxThb(money, data.dividendNetUsd, data.usdThbRate),
+          )}
         />
         <OverviewCard
           label="ปันผลสุทธิบาท"
@@ -325,6 +337,31 @@ function OverviewCard({
       {hint ? <p className="mt-1 text-xs text-stone-400">{hint}</p> : null}
     </div>
   );
+}
+
+type MoneyFmt = ReturnType<typeof useMoneyFmt>;
+
+function approxThb(
+  money: MoneyFmt,
+  usd: number | null | undefined,
+  rate: number | null,
+): string | undefined {
+  if (usd == null || rate == null) return undefined;
+  return `≈ ${money.thb(usd * rate)}`;
+}
+
+function approxThbSigned(
+  money: MoneyFmt,
+  usd: number | null | undefined,
+  rate: number | null,
+): string | undefined {
+  if (usd == null || rate == null) return undefined;
+  return `≈ ${money.signed(fmt.thb, usd * rate)}`;
+}
+
+function joinHints(...parts: Array<string | undefined>): string | undefined {
+  const list = parts.filter((part): part is string => Boolean(part));
+  return list.length > 0 ? list.join(' · ') : undefined;
 }
 
 function overviewTone(value: number | null): 'up' | 'down' | 'flat' {
