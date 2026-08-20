@@ -107,6 +107,11 @@ export class QuotesService {
     market: 'th' | 'foreign',
     symbol: string,
   ): Promise<QuotePrice | null> {
+    // กองทุนไทยไม่มีบน Yahoo — ไป SEC ตรงๆ เพื่อไม่ spam 404
+    if (market === 'th' && this.secApiKey && looksLikeThaiFund(ticker)) {
+      return this.getSecQuote(ticker, symbol);
+    }
+
     const yahoo = await this.getYahooQuote(symbol);
     if (yahoo) return yahoo;
 
@@ -128,7 +133,11 @@ export class QuotesService {
         return { symbol, price, stale: false };
       }
     } catch (error) {
-      this.log.warn(`ดึงราคา Yahoo ${symbol} ไม่สำเร็จ: ${String(error)}`);
+      // 404 = ไม่มีสัญลักษณ์ (เช่น กองทุนที่พลาด heuristic) — ไม่ต้อง warn ซ้ำๆ
+      const msg = String(error);
+      if (!msg.includes('HTTP 404')) {
+        this.log.warn(`ดึงราคา Yahoo ${symbol} ไม่สำเร็จ: ${msg}`);
+      }
     }
 
     if (cached) {
@@ -303,6 +312,11 @@ export class QuotesService {
     const price = meta?.regularMarketPrice ?? meta?.previousClose;
     return typeof price === 'number' && Number.isFinite(price) ? price : null;
   }
+}
+
+/** Exported for unit tests — เช่น K-US500X-A(A), K-USXNDQ-A(D) */
+export function looksLikeThaiFund(ticker: string): boolean {
+  return /^[A-Z0-9][A-Z0-9-]*-[A-Z]\([^)]+\)$/i.test(ticker.trim());
 }
 
 /** Exported for unit tests */

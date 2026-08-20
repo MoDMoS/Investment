@@ -1,6 +1,17 @@
-import { pickSecFundRef, stripFundClassSuffix } from './quotes.service';
+import {
+  looksLikeThaiFund,
+  pickSecFundRef,
+  stripFundClassSuffix,
+} from './quotes.service';
 
 describe('SEC fund helpers', () => {
+  it('detects Thai fund class tickers', () => {
+    expect(looksLikeThaiFund('K-US500X-A(A)')).toBe(true);
+    expect(looksLikeThaiFund('K-USXNDQ-A(A)')).toBe(true);
+    expect(looksLikeThaiFund('PTT')).toBe(false);
+    expect(looksLikeThaiFund('K-US500X')).toBe(false);
+  });
+
   it('strips class suffix from Thai fund tickers', () => {
     expect(stripFundClassSuffix('K-US500X-A(A)')).toBe('K-US500X');
     expect(stripFundClassSuffix('K-USXNDQ-A(A)')).toBe('K-USXNDQ');
