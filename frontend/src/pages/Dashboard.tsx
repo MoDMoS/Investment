@@ -381,10 +381,9 @@ function netAbroadHints(
   thbNetAbroad: number,
   foreignMvThb: number | null,
 ): string {
-  const capital = `เงินออก−เงินเข้า ${money.thb(thbNetAbroad)}`;
-  if (foreignMvThb == null) return capital;
+  if (foreignMvThb == null) return money.thb(thbNetAbroad);
   const delta = foreignMvThb - thbNetAbroad;
-  return `${capital} · มูลค่าหุ้นนอก−(เงินออก−เงินเข้า) ${money.signed(fmt.thb, delta)}`;
+  return `${money.thb(thbNetAbroad)} · ${money.signed(fmt.thb, delta)}`;
 }
 
 function joinHints(...parts: Array<string | undefined>): string | undefined {
