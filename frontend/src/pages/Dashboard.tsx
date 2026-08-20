@@ -47,6 +47,10 @@ export function DashboardPage() {
     (sum, row) => sum + (row.marketValue ?? row.totalCost),
     0,
   );
+  const foreignMvThb = usdToThb(
+    data.marketValueUsd ?? data.holdingsCostUsd,
+    data.usdThbRate,
+  );
 
   return (
     <div className="space-y-6">
@@ -70,7 +74,13 @@ export function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <OverviewCard label="เงินออกประเทศ" value={money.thb(data.thbOut)} />
         <OverviewCard label="เงินนำกลับ" value={money.thb(data.thbIn)} hint="กรอกเองเมื่อนำเข้าจริง" />
-        <OverviewCard label="สุทธิต่างประเทศ" value={money.thb(data.thbNetAbroad)} />
+        <OverviewCard
+          label="สุทธิต่างประเทศ"
+          value={
+            foreignMvThb != null ? money.thb(foreignMvThb) : '—'
+          }
+          hint={netAbroadHints(money, data.thbNetAbroad, foreignMvThb)}
+        />
         <OverviewCard
           label="ต้นทุนเฉลี่ยแลกออก"
           value={data.avgOutRate != null ? `${fmt.number(data.avgOutRate, 2)} บาท/USD` : '—'}
@@ -341,13 +351,19 @@ function OverviewCard({
 
 type MoneyFmt = ReturnType<typeof useMoneyFmt>;
 
+function usdToThb(usd: number | null | undefined, rate: number | null): number | null {
+  if (usd == null || rate == null) return null;
+  return usd * rate;
+}
+
 function approxThb(
   money: MoneyFmt,
   usd: number | null | undefined,
   rate: number | null,
 ): string | undefined {
-  if (usd == null || rate == null) return undefined;
-  return `≈ ${money.thb(usd * rate)}`;
+  const thb = usdToThb(usd, rate);
+  if (thb == null) return undefined;
+  return `≈ ${money.thb(thb)}`;
 }
 
 function approxThbSigned(
@@ -355,8 +371,20 @@ function approxThbSigned(
   usd: number | null | undefined,
   rate: number | null,
 ): string | undefined {
-  if (usd == null || rate == null) return undefined;
-  return `≈ ${money.signed(fmt.thb, usd * rate)}`;
+  const thb = usdToThb(usd, rate);
+  if (thb == null) return undefined;
+  return `≈ ${money.signed(fmt.thb, thb)}`;
+}
+
+function netAbroadHints(
+  money: MoneyFmt,
+  thbNetAbroad: number,
+  foreignMvThb: number | null,
+): string {
+  const capital = `เงินออก−เงินเข้า ${money.thb(thbNetAbroad)}`;
+  if (foreignMvThb == null) return capital;
+  const delta = foreignMvThb - thbNetAbroad;
+  return `${capital} · มูลค่าหุ้นนอก−(เงินออก−เงินเข้า) ${money.signed(fmt.thb, delta)}`;
 }
 
 function joinHints(...parts: Array<string | undefined>): string | undefined {
