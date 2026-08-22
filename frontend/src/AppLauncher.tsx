@@ -25,6 +25,7 @@ export function AppLauncher() {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     function onClick(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpen(false);
@@ -32,7 +33,7 @@ export function AppLauncher() {
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
-  }, []);
+  }, [open]);
 
   const authLocked = !loading && !user;
   const visibleServices = services.filter(
@@ -47,7 +48,11 @@ export function AppLauncher() {
         aria-label="เปิดเมนูบริการ"
         aria-expanded={open}
         title="บริการ MoDMoS"
-        onClick={() => setOpen((prev) => !prev)}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
       >
         <AppsIcon className="topbar-apps-icon" />
       </button>

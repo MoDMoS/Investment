@@ -1,7 +1,9 @@
 FROM node:22-alpine AS build
 WORKDIR /app
-ARG VITE_BASE=/
+ARG VITE_BASE=/Investment/
+ARG VITE_GOLD_AGENT_URL=/gold/
 ENV VITE_BASE=$VITE_BASE
+ENV VITE_GOLD_AGENT_URL=$VITE_GOLD_AGENT_URL
 COPY package*.json ./
 RUN npm ci
 COPY . .

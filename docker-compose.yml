@@ -40,7 +40,8 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_BASE: ${VITE_BASE:-/}
+        VITE_BASE: ${VITE_BASE:-/Investment/}
+        VITE_GOLD_AGENT_URL: ${VITE_GOLD_AGENT_URL:-/gold/}
     container_name: investment_web
     ports:
       - "127.0.0.1:8080:80"

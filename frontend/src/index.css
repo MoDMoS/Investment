@@ -282,6 +282,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.app-launcher {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .topbar-muted {
@@ -426,10 +434,6 @@ body {
 
 .topbar-dropdown__item--danger {
   color: #f07178;
-}
-
-.app-launcher {
-  position: relative;
 }
 
 .app-launcher__panel {
