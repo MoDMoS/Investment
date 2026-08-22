@@ -1,12 +1,13 @@
 services:
   db:
     image: postgres:16-alpine
+    container_name: investment_postgres
     environment:
       POSTGRES_USER: investment
       POSTGRES_PASSWORD: investment
       POSTGRES_DB: investment
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - investment_pg:/var/lib/postgresql/data
     restart: unless-stopped
@@ -15,11 +16,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - modmos-db
 
   api:
     build: ./backend
+    container_name: investment_api
     environment:
-      DATABASE_URL: postgresql://investment:investment@db:5432/investment?schema=public
+      DATABASE_URL: postgresql://investment:investment@investment_postgres:5432/investment?schema=public
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       SEC_API_KEY: ${SEC_API_KEY:-}
@@ -29,17 +33,27 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - modmos-db
 
   web:
     build:
       context: ./frontend
       args:
         VITE_BASE: ${VITE_BASE:-/}
+    container_name: investment_web
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     depends_on:
       - api
     restart: unless-stopped
+    networks:
+      - modmos-db
+
+networks:
+  modmos-db:
+    external: true
+    name: modmos-db
 
 volumes:
   investment_pg:
