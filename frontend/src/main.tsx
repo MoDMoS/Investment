@@ -5,7 +5,6 @@ import { App } from './App';
 import { AuthProvider } from './auth';
 import { PrivacyProvider } from './privacy';
 import './index.css';
-import './modmos-topbar.css';
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
